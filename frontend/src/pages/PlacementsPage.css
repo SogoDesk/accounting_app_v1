@@ -1,0 +1,160 @@
+/* Placements & candidates — Step 4 restyle (scoped, tokens-only) */
+.plc-page { font-family: var(--font-ui); display: flex; flex-direction: column; gap: 18px; }
+
+/* Page header */
+.plc-head { display: flex; align-items: flex-start; gap: 16px; }
+.plc-back {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); cursor: pointer; margin-top: 4px;
+  transition: border-color .15s ease, color .15s ease;
+}
+.plc-back:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--accent-text); }
+.plc-head-titles { min-width: 0; }
+.plc-title { font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -0.03em; color: var(--ink); }
+.plc-subtitle { margin-top: 7px; font-weight: 500; font-size: 13px; color: var(--muted); max-width: 640px; }
+.plc-head-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; flex: none; }
+
+.plc-iconbtn {
+  width: 44px; height: 44px; border-radius: var(--r-btn);
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); cursor: pointer; transition: border-color .15s ease, color .15s ease;
+}
+.plc-iconbtn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--accent-text); }
+.plc-iconbtn.is-active { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: var(--accent-soft); color: var(--accent-text); }
+
+.plc-btn {
+  height: 46px; padding: 0 18px; border-radius: var(--r-btn);
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-family: var(--font-ui); font-weight: 700; white-space: nowrap;
+}
+.plc-btn-secondary { border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); font-size: 13.5px; }
+.plc-btn-secondary:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.plc-btn-primary {
+  border: 1px solid transparent; background: var(--accent); color: var(--accent-contrast);
+  font-size: 14px; box-shadow: var(--shadow-btn);
+}
+.plc-btn-primary:hover { box-shadow: var(--shadow-accent); }
+
+/* KPI row */
+.plc-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+
+/* Filter row */
+.plc-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.plc-pill { position: relative; display: inline-flex; }
+.plc-pill > select {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; border: none; margin: 0; padding: 0;
+}
+.plc-search {
+  display: inline-flex; align-items: center; gap: 8px; flex: 1 1 240px; min-width: 220px;
+  height: 42px; padding: 0 15px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.plc-search input {
+  border: none; outline: none; background: transparent; flex: 1; min-width: 0;
+  font-family: var(--font-ui); font-size: 12.5px; color: var(--ink);
+}
+.plc-search input::placeholder { color: var(--faint); }
+.plc-search .plc-search-ico { display: inline-flex; color: var(--icon); }
+
+/* Content grid */
+.plc-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 340px); gap: 16px; align-items: start; }
+.plc-panel { display: flex; flex-direction: column; gap: 14px; }
+
+/* Candidate cell */
+.plc-cand { display: flex; align-items: center; gap: 11px; }
+.plc-avatar {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-tint); color: var(--accent-text);
+  font-family: var(--font-ui); font-weight: 700; font-size: 11.5px;
+}
+.plc-cand-stack { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.plc-cand-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+.plc-cand-sub { font-weight: 500; font-size: 11px; color: var(--muted); }
+.plc-cand-sub .plc-mono { font-family: var(--font-mono); }
+.plc-twoline { display: flex; flex-direction: column; gap: 1px; }
+.plc-twoline-main { font-weight: 500; font-size: 13px; color: var(--ink-2); }
+.plc-twoline-sub { font-weight: 500; font-size: 11px; color: var(--muted); }
+
+/* Give placement rows room for avatar + sub-line */
+.plc-page .sg-table tbody tr { height: 58px; }
+.plc-ends-danger { color: var(--danger-text); }
+.plc-margin-ok { color: var(--success-text); font-weight: 700; }
+.plc-margin-low { color: var(--warn-text); font-weight: 700; }
+
+/* Right rail */
+.plc-rail { display: flex; flex-direction: column; gap: 16px; }
+.plc-rail-head { display: flex; align-items: flex-start; gap: 10px; }
+.plc-rail-code { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--ink); }
+.plc-rail-actions { margin-left: auto; display: inline-flex; gap: 6px; }
+.plc-rail-iconbtn {
+  width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--icon); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.plc-rail-iconbtn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--accent-text); }
+.plc-rail-iconbtn.danger:hover { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); color: var(--danger-text); }
+
+.plc-rail-job { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.plc-rail-job-title { font-weight: 700; font-size: 13.5px; color: var(--ink); }
+.plc-rail-job-sub { font-weight: 500; font-size: 11px; color: var(--muted); }
+
+/* Rings */
+.plc-rings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.plc-ring { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.plc-ring-svg { position: relative; width: 62px; height: 62px; }
+.plc-ring-num {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.plc-ring-label { font-weight: 600; font-size: 10.5px; letter-spacing: .02em; color: var(--muted); }
+
+/* section titles inside rail cards */
+.plc-sec-title { font-weight: 800; font-size: 13px; letter-spacing: -0.01em; color: var(--ink); }
+.plc-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+
+/* Economics list */
+.plc-econ { display: flex; flex-direction: column; }
+.plc-econ-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--border-hair);
+}
+.plc-econ-row:last-child { border-bottom: none; }
+.plc-econ-k { font-weight: 500; font-size: 12.5px; color: var(--muted); }
+.plc-econ-v { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Compliance checklist */
+.plc-check { display: flex; flex-direction: column; gap: 4px; }
+.plc-check-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.plc-check-ico { flex: none; display: inline-flex; color: var(--success-text); }
+.plc-check-row.is-warn .plc-check-ico { color: var(--warn-text); }
+.plc-check-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.plc-check-name { font-weight: 700; font-size: 12.5px; color: var(--ink); }
+.plc-check-row.is-warn .plc-check-name { color: var(--warn-text); }
+.plc-check-sub { font-family: var(--font-mono); font-weight: 500; font-size: 10.5px; color: var(--muted); }
+
+/* ---- Responsive (tablet / phone) ------------------------------------------ */
+@media (max-width: 1080px) {
+  /* Stack the two-column layout; rail drops below the assignments table */
+  .plc-content { grid-template-columns: minmax(0, 1fr); }
+  /* 5-up KPI row collapses to 2 columns */
+  .plc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  /* Header can wrap so actions drop below the title if needed */
+  .plc-head { flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .plc-page { gap: 14px; }
+  /* Header stacks; actions drop to their own full-width line */
+  .plc-title { font-size: 28px; }
+  .plc-head-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  /* KPI figures (revenue/cost) are long — one per row on phones */
+  .plc-kpis { grid-template-columns: 1fr; gap: 12px; }
+  /* Filter row: search takes the full width beneath the pills */
+  .plc-search { flex-basis: 100%; }
+}

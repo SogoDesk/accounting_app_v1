@@ -1,0 +1,57 @@
+const express = require("express");
+
+const authRoutes = require("./authRoutes");
+const regionRoutes = require("./regionRoutes");
+const clientRoutes = require("./clientRoutes");
+const candidateRoutes = require("./candidateRoutes");
+const userRoutes = require("./userRoutes");
+const roleRoutes = require("./roleRoutes");
+const auditRoutes = require("./auditRoutes");
+const notificationRoutes = require("./notificationRoutes");
+const reportRoutes = require("./reportRoutes");
+const placementRoutes = require("./placementRoutes");
+const invoiceRoutes = require("./invoiceRoutes");
+const paymentRoutes = require("./paymentRoutes");
+const healthRoutes = require("./healthRoutes");
+const vendorRoutes = require("./vendorRoutes");
+const billRoutes = require("./billRoutes");
+const vendorPaymentRoutes = require("./vendorPaymentRoutes");
+const glRoutes = require("./glRoutes");
+const expenseRoutes = require("./expenseRoutes");
+const orgRoutes = require("./orgRoutes");
+const intercompanyRoutes = require("./intercompanyRoutes");
+const bankRoutes = require("./bankRoutes");
+const attachmentRoutes = require("./attachmentRoutes");
+const timesheetRoutes = require("./timesheetRoutes");
+const settingsRoutes = require("./settingsRoutes");
+const emailTemplateRoutes = require("./emailTemplateRoutes");
+
+const router = express.Router();
+
+router.use("/auth", authRoutes);
+router.use("/regions", regionRoutes);
+router.use("/clients", clientRoutes);
+router.use("/candidates", candidateRoutes);
+router.use("/users", userRoutes);
+router.use("/roles", roleRoutes);
+router.use("/audit-logs", auditRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/reports", reportRoutes);
+router.use("/placements", placementRoutes);
+router.use("/invoices", invoiceRoutes);
+router.use("/payments", paymentRoutes);
+router.use("/vendors", vendorRoutes);
+router.use("/bills", billRoutes);
+router.use("/vendor-payments", vendorPaymentRoutes);
+router.use("/gl", glRoutes);
+router.use("/expenses", expenseRoutes);
+router.use("/org-units", orgRoutes);
+router.use("/intercompany", intercompanyRoutes);
+router.use("/bank", bankRoutes);
+router.use("/attachments", attachmentRoutes);
+router.use("/timesheets", timesheetRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/email-templates", emailTemplateRoutes);
+router.use("/health", healthRoutes);
+
+module.exports = router;

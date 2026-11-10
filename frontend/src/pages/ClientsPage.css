@@ -1,0 +1,277 @@
+/* Clients page — Step 4 visual restyle (scoped, token-only) */
+
+.cl-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Header ---------------------------------------------------------- */
+.cl-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.cl-head-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.cl-back {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.cl-back:hover { background: var(--surface-sunken); }
+.cl-title {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.cl-subtitle {
+  margin-top: 7px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cl-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons --------------------------------------------------------- */
+.cl-iconbtn {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.cl-iconbtn:hover { background: var(--surface-sunken); }
+.cl-btn {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: var(--r-btn);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.cl-btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-2);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.cl-btn-secondary:hover { background: var(--surface-sunken); }
+.cl-btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: var(--shadow-btn);
+}
+.cl-btn-primary:hover { filter: brightness(1.03); }
+
+/* KPI row --------------------------------------------------------- */
+.cl-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Filter row ------------------------------------------------------ */
+.cl-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cl-filter-count {
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.cl-filter-count b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 11px;
+}
+.cl-search {
+  margin-left: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.cl-search svg {
+  position: absolute;
+  right: 14px;
+  color: var(--icon);
+  pointer-events: none;
+}
+.cl-search input {
+  height: 42px;
+  width: 240px;
+  padding: 0 38px 0 15px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  outline: none;
+}
+.cl-search input::placeholder { color: var(--faint); }
+.cl-search input:focus { border-color: var(--accent); }
+
+/* Filter dropdown ------------------------------------------------- */
+.cl-fdrop { position: relative; }
+.cl-fdrop-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: var(--r-dropdown);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow: auto;
+}
+.cl-fdrop-item {
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cl-fdrop-item:hover { background: var(--surface-sunken); }
+.cl-fdrop-item.is-on {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.cl-fdrop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+}
+
+/* Panel ----------------------------------------------------------- */
+.cl-panel {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r-panel);
+  padding: 20px 20px 22px;
+  box-shadow: var(--shadow-card);
+}
+.cl-panel-tools {
+  display: inline-flex;
+  gap: 6px;
+}
+
+/* Cell bits ------------------------------------------------------- */
+.cl-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+}
+.cl-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+.cl-over { color: var(--danger-text); }
+
+.cl-rowkebab {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--icon);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.cl-rowkebab:hover { background: var(--surface-sunken); border-color: var(--border); }
+
+/* Responsive ------------------------------------------------------ */
+@media (max-width: 1080px) {
+  .cl-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .cl-title { font-size: 32px; }
+}
+
+@media (max-width: 640px) {
+  /* Header wraps: title block first, actions drop to a full-width second line */
+  .cl-head { flex-wrap: wrap; }
+  .cl-head-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .cl-title { font-size: 28px; line-height: 1.1; }
+  .cl-kpis { grid-template-columns: repeat(2, 1fr); }
+  /* Filter search field goes full width on its own line */
+  .cl-search { margin-left: 0; width: 100%; }
+  .cl-search input { width: 100%; }
+  /* Ease the panel padding so the table isn't squeezed */
+  .cl-panel { padding: 16px 14px 18px; }
+}
+
+@media (max-width: 400px) {
+  .cl-kpis { grid-template-columns: 1fr; }
+}

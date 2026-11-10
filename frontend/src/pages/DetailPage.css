@@ -1,0 +1,167 @@
+/* ==========================================================================
+   Client (customer) detail page
+   Header identity + contact + financial summary, then a tabbed panel with
+   the transaction list, placements, and full customer details. Uses the app's
+   shared primitives (Card/PanelHeader/DataTable/StatusChip) + design tokens.
+   ========================================================================== */
+
+.client-detail { display: flex; flex-direction: column; gap: 16px; }
+
+.cd-back { margin-bottom: -4px; }
+.cd-backlink {
+  font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  color: var(--muted); text-decoration: none;
+}
+.cd-backlink:hover { color: var(--accent-text); }
+
+/* ---- Header card -------------------------------------------------------- */
+.cd-header {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1.4fr) minmax(240px, 0.9fr);
+  gap: 28px;
+  padding: 24px 26px;
+  align-items: start;
+}
+
+.cd-identity { display: flex; gap: 16px; align-items: flex-start; }
+.cd-avatar {
+  flex: 0 0 auto;
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent-text);
+  font-family: var(--font-ui); font-weight: 700; font-size: 18px;
+  letter-spacing: 0.5px;
+}
+.cd-identity-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.cd-name {
+  font-family: var(--font-ui); font-size: 21px; font-weight: 700;
+  color: var(--ink); margin: 0; line-height: 1.2;
+}
+.cd-sub { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.cd-quick { display: flex; gap: 8px; margin-top: 6px; }
+.cd-quickbtn {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface-sunken);
+  color: var(--muted); cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.cd-quickbtn:hover { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.cd-editbtn {
+  height: 34px; padding: 0 14px; border-radius: 9px;
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--accent); background: var(--accent-soft);
+  color: var(--accent-text); font-family: var(--font-ui);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.cd-editbtn:hover { background: var(--accent); color: #fff; }
+
+/* Edit modal form */
+.cd-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cd-form-full { grid-column: 1 / -1; }
+.cd-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+@media (max-width: 600px) { .cd-form-grid { grid-template-columns: 1fr; } }
+
+/* Contact grid (middle column) */
+.cd-contact {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px;
+  border-left: 1px solid var(--border); padding-left: 28px;
+}
+.cd-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cd-flabel {
+  font-family: var(--font-ui); font-size: 11px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px;
+}
+.cd-fvalue {
+  font-family: var(--font-ui); font-size: 13.5px; color: var(--ink); font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.cd-empty { color: var(--muted); font-weight: 400; font-style: italic; }
+
+/* Financial summary (right column, tinted) */
+.cd-summary {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  border-radius: 14px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.cd-summary-head {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-ui); font-size: 14px; font-weight: 700; color: var(--ink);
+}
+.cd-summary-head svg { color: var(--accent-text); }
+.cd-summary-item { display: flex; flex-direction: column; gap: 2px; }
+.cd-summary-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--muted); font-weight: 500;
+}
+.cd-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.cd-dot-amber { background: #e6a817; }
+.cd-dot-red { background: var(--danger); }
+.cd-summary-val {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.cd-summary-val.is-danger { color: var(--danger); }
+
+/* ---- Tabbed panel ------------------------------------------------------- */
+.cd-panel { padding: 4px 20px 20px; }
+.cd-filters { display: flex; gap: 12px; padding: 16px 0 4px; flex-wrap: wrap; }
+.cd-filters .form-group { margin: 0; }
+.cd-filters .form-control { min-width: 180px; }
+
+.cd-memo { color: var(--muted); font-size: 13px; }
+.cd-muted { color: var(--muted); }
+.cd-link { color: var(--accent-text); text-decoration: none; font-weight: 600; }
+.cd-link:hover { text-decoration: underline; }
+.cd-linkbtn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: inherit; font-weight: 600;
+  color: var(--accent-text); text-align: left;
+}
+.cd-linkbtn:hover { text-decoration: underline; }
+
+/* ---- Customer details tab ---------------------------------------------- */
+.cd-details {
+  display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px;
+  padding: 20px 0 4px; align-items: start;
+}
+.cd-details-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px;
+}
+.cd-aging {
+  background: var(--surface-sunken); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+.cd-aging-head {
+  font-family: var(--font-ui); font-size: 13px; font-weight: 700;
+  color: var(--ink); margin-bottom: 12px;
+}
+.cd-age-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cd-age-row:last-child { margin-bottom: 0; }
+.cd-age-label { flex: 0 0 56px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.cd-age-track { flex: 1; height: 8px; border-radius: 6px; background: var(--border); overflow: hidden; }
+.cd-age-fill { display: block; height: 100%; border-radius: 6px; }
+.cd-age-val {
+  flex: 0 0 auto; min-width: 92px; text-align: right;
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Loading skeleton --------------------------------------------------- */
+.cd-header.is-skeleton { min-height: 132px; }
+.sg-skel-table { width: 100%; border-collapse: collapse; }
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .cd-header { grid-template-columns: 1fr 1fr; }
+  .cd-summary { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  .cd-details { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .cd-header { grid-template-columns: 1fr; }
+  .cd-contact { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 18px; }
+  .cd-details-grid { grid-template-columns: 1fr; }
+  .cd-filters .form-control { min-width: 0; width: 100%; }
+}

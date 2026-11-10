@@ -1,0 +1,143 @@
+/* Chart of Accounts — Step 4 restyle (scoped, token-only colour) */
+
+.coa-page { font-family: var(--font-ui); }
+
+/* --- Page header ------------------------------------------------- */
+.coa-head {
+  display: flex; align-items: flex-start; gap: 16px;
+  margin-bottom: 22px;
+}
+.coa-back {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.coa-back:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.coa-titles { min-width: 0; }
+.coa-title {
+  margin: 0; font-weight: 800; font-size: 40px; line-height: 1;
+  letter-spacing: -0.03em; color: var(--ink);
+}
+.coa-sub {
+  margin: 7px 0 0; font-weight: 500; font-size: 13px; color: var(--muted);
+}
+.coa-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
+
+.coa-btn {
+  height: 46px; padding: 0 18px; border-radius: var(--r-btn);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-ui); font-weight: 700; font-size: 13.5px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+  cursor: pointer; white-space: nowrap;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.coa-btn:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.coa-iconbtn {
+  width: 46px; height: 46px; padding: 0; justify-content: center; color: var(--icon);
+}
+.coa-btn-primary {
+  border: none; background: var(--accent); color: var(--accent-contrast);
+  font-size: 14px; box-shadow: var(--shadow-btn);
+}
+.coa-btn-primary:hover { box-shadow: var(--shadow-accent); }
+.coa-btn svg, .coa-iconbtn svg { flex: none; }
+
+/* --- KPI row ----------------------------------------------------- */
+.coa-kpis {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1100px) { .coa-kpis { grid-template-columns: repeat(2, 1fr); } }
+
+/* --- Filter row -------------------------------------------------- */
+.coa-filters {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.coa-fpill {
+  position: relative; display: inline-flex; align-items: center;
+  height: 42px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.coa-fpill.is-active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+.coa-fselect {
+  appearance: none; -webkit-appearance: none; border: none; background: transparent;
+  height: 42px; padding: 0 34px 0 15px; border-radius: var(--r-pill);
+  font-family: var(--font-ui); font-weight: 600; font-size: 12.5px;
+  color: var(--ink-2); cursor: pointer; outline: none;
+}
+.coa-fpill.is-active .coa-fselect { color: var(--accent-text); font-weight: 700; }
+.coa-fpill::after {
+  content: ""; position: absolute; right: 14px; width: 8px; height: 8px;
+  border-right: 1.8px solid var(--icon); border-bottom: 1.8px solid var(--icon);
+  transform: rotate(45deg) translateY(-2px); pointer-events: none;
+}
+.coa-search {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 42px; padding: 0 15px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--icon); flex: 1 1 220px; min-width: 180px; max-width: 320px;
+}
+.coa-search input {
+  border: none; background: transparent; outline: none; width: 100%;
+  font-family: var(--font-ui); font-weight: 500; font-size: 12.5px; color: var(--ink-2);
+}
+.coa-search input::placeholder { color: var(--faint); }
+
+/* --- Main list panel --------------------------------------------- */
+.coa-panel {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--r-panel); box-shadow: var(--shadow-card);
+  padding: 20px 20px 22px;
+}
+.coa-panel-head { margin-bottom: 14px; }
+
+/* tree account cell */
+.coa-acct { display: inline-flex; align-items: center; gap: 8px; }
+.coa-acct-name { font-weight: 500; }
+.coa-acct.is-class .coa-acct-name { font-weight: 800; color: var(--ink); letter-spacing: -.005em; }
+.coa-acct.is-parent .coa-acct-name { font-weight: 700; color: var(--ink); }
+.coa-tag {
+  font-family: var(--font-ui); font-weight: 700; font-size: 9.5px; letter-spacing: .04em;
+  text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-pill);
+  background: var(--surface-sunken); color: var(--muted);
+}
+.coa-normal { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--faint); }
+.coa-editbtn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--icon);
+  width: 30px; height: 30px; border-radius: 9px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .15s ease, color .15s ease;
+}
+.coa-editbtn:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--accent-text); }
+.coa-row-inactive { opacity: .55; }
+
+.coa-state {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--r-panel); padding: 24px; color: var(--muted);
+  font-family: var(--font-ui); font-size: 13px;
+}
+
+/* --- Responsive ------------------------------------------------- */
+@media (max-width: 1080px) {
+  .coa-head { flex-wrap: wrap; }
+  .coa-actions { margin-left: 0; flex-wrap: wrap; }
+  .coa-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+@media (max-width: 640px) {
+  .coa-head { gap: 12px; margin-bottom: 18px; }
+  /* actions drop below the title and align to the start */
+  .coa-actions { flex-basis: 100%; margin-left: 0; }
+  .coa-title { font-size: 28px; }
+  .coa-kpis { grid-template-columns: 1fr; }
+  /* let the search field take the full row */
+  .coa-search { flex: 1 1 100%; max-width: none; }
+  .coa-fpill, .coa-fselect { width: 100%; }
+  .coa-panel { padding: 14px 14px 16px; }
+}

@@ -1,0 +1,744 @@
+/* ============================================================
+   UI refresh — phase 1: calmer, collapsible sidebar
+   Layered after saas.css to override without rewriting it.
+   ============================================================ */
+
+/* Quieter icons (were bright cyan on every item) */
+.saas-sidebar .nav-icon { color: var(--text-secondary); }
+.saas-sidebar .nav-link-active .nav-icon,
+.saas-sidebar .nav-group-toggle:hover .nav-icon { color: var(--text-primary); }
+
+/* Softer links: gentle radius, no sliding hover, no glow on active */
+.saas-sidebar .nav-link { border-radius: 8px; padding: 8px 12px; transition: background-color .15s ease, color .15s ease; }
+.saas-sidebar .nav-link:hover { transform: none; }
+.saas-sidebar .nav-link-active { box-shadow: none; }
+
+/* Collapsible group sections */
+.nav-group + .nav-group { margin-top: 2px; padding-top: 2px; border-top: none; }
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color .15s ease, color .15s ease;
+}
+.nav-group-toggle:hover { background: var(--nav-hover-bg); color: var(--text-primary); }
+.nav-accordion.open > .nav-group-toggle { color: var(--text-primary); }
+.nav-group-chev { margin-left: auto; display: inline-flex; opacity: .55; transition: transform .15s ease; }
+.nav-group-chev svg { width: 14px; height: 14px; }
+.nav-accordion.open .nav-group-chev { transform: rotate(90deg); }
+
+/* Children hidden until the section is open */
+.nav-accordion .nav-group-items { display: none; }
+.nav-accordion.open .nav-group-items { display: grid; }
+.nav-accordion .nav-link { padding-left: 30px; }
+
+/* ============================================================
+   UI refresh — phase 2: calm, flat visual style everywhere
+   Flatten the design tokens (no gradients / blur / glow), then
+   kill the few hardcoded effects that don't read from tokens.
+   ============================================================ */
+
+/* ---- Flattened tokens: default (no theme attr) + light ---- */
+:root,
+:root[data-theme="light"] {
+  --bg-primary: #f6f7f9;
+  --bg-secondary: #ffffff;
+  --bg-app: #f6f7f9;
+  --text-primary: #1b2130;
+  --text-secondary: #626c7d;
+  --card-bg: #ffffff;
+  --bg-panel: #ffffff;
+  --bg-panel-strong: #ffffff;
+  --border: #e6e8ec;
+  --primary-strong: var(--accent);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --app-radial-1: transparent;
+  --app-radial-2: transparent;
+  --sidebar-bg: #ffffff;
+  --nav-link-color: #465062;
+  --nav-hover-bg: #eef1f6;
+  --nav-active-bg: #e7edfb;
+  --nav-active-shadow: none;
+  --btn-primary-text: #ffffff;
+  --btn-primary-bg: var(--accent);
+  --btn-secondary-text: #344054;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-border: #d4d8df;
+  --table-row-bg: #ffffff;
+  --kpi-card-bg: #ffffff;
+  --kpi-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --overlay-bg: rgba(16, 24, 40, 0.45);
+  --popover-bg: #ffffff;
+}
+
+/* ---- Flattened tokens: dark ---- */
+:root[data-theme="dark"] {
+  --bg-primary: #0b0f17;
+  --bg-secondary: #141a24;
+  --bg-app: #0b0f17;
+  --text-primary: #e8ebf2;
+  --text-secondary: #9aa3b2;
+  --card-bg: #141a24;
+  --bg-panel: #141a24;
+  --bg-panel-strong: #161d28;
+  --border: #232b38;
+  --primary-strong: var(--accent);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --app-radial-1: transparent;
+  --app-radial-2: transparent;
+  --sidebar-bg: #0c121b;
+  --nav-link-color: #c2cad9;
+  --nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --nav-active-bg: rgba(79, 124, 240, 0.20);
+  --nav-active-shadow: none;
+  --btn-primary-text: #ffffff;
+  --btn-primary-bg: #4f7cf0;
+  --btn-secondary-text: #d6def0;
+  --btn-secondary-bg: #1b2430;
+  --btn-secondary-border: #2b3543;
+  --table-row-bg: #141a24;
+  --kpi-card-bg: #141a24;
+  --kpi-card-shadow: none;
+  --overlay-bg: rgba(3, 6, 12, 0.6);
+  --popover-bg: #161d28;
+}
+
+/* ---- Kill hardcoded glass effects that don't read from tokens ---- */
+.glass-card,
+.table-card { backdrop-filter: none; box-shadow: var(--shadow); }
+
+.saas-search-form {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  border-radius: 10px;
+}
+.saas-search-form:focus-within {
+  border-color: var(--primary-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-strong) 18%, transparent);
+}
+
+/* ---- Calmer buttons ---- */
+.primary-btn { background: var(--btn-primary-bg); box-shadow: none; }
+.secondary-btn { background: var(--btn-secondary-bg); box-shadow: none; }
+.primary-btn:hover,
+.secondary-btn:hover { transform: none; }
+
+/* ---- Calmer stat cards ---- */
+.stat-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+/* ---- Calmer tables: quiet header, hairline rows ---- */
+.saas-table th {
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.saas-table td,
+.saas-table th { border-bottom: 1px solid var(--border); }
+
+/* ============================================================
+   Dashboard fix: stop nested-scroll trap.
+   Cards grow to fit their content so the whole page scrolls as
+   one, instead of each card capturing the wheel. Chart boxes keep
+   their own height (charts need it) and are not affected.
+   ============================================================ */
+.fd-scroll-body {
+  overflow: visible !important;
+  max-height: none !important;
+  overscroll-behavior: auto !important;
+}
+.fd-performance-card,
+.fd-client-performance-card,
+.fd-main-row-two > .fd-panel,
+.fd-dashboard-split > *,
+.fd-dashboard-split > .fd-stacked-column,
+.fd-stacked-column,
+.fd-stacked-column > * {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+/* ============================================================
+   Align every page to the Home dashboard look (titles, stat
+   tiles, filters, cards). Overrides the shared page classes so
+   all list/detail pages match the dashboard without per-page edits.
+   ============================================================ */
+
+/* Page header */
+.page-title { font-weight: 600 !important; font-size: 22px; letter-spacing: -0.01em; }
+.page-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+/* Cards -> dashboard card: flat surface, 12px corners */
+.table-card, .glass-card { border-radius: 12px !important; }
+
+/* Stat tiles -> dashboard KPI tiles */
+.stats-grid { gap: 12px !important; }
+.stat-card { border-radius: 12px !important; padding: 16px; }
+.stat-card:hover { transform: none !important; }
+.stat-label { font-size: 13px !important; letter-spacing: normal !important; color: var(--text2) !important; }
+.stat-value { font-family: inherit !important; font-size: 24px !important; font-weight: 600 !important; margin-top: 8px !important; }
+.stat-hint { font-size: 12px !important; color: var(--text2) !important; }
+
+/* Filters -> dashboard select (clean, 38px, 8px corners) */
+.filter-select,
+.search-input {
+  height: 38px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  padding: 0 12px !important;
+  box-shadow: none !important;
+}
+.filter-select:focus,
+.search-input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent) !important;
+}
+
+/* Filter/toolbar row spacing */
+.table-toolbar { gap: 8px; align-items: center; }
+
+/* ============================================================
+   QuickBooks-style sidebar: circular colored icon badges on
+   section headers, plain indented sub-items, calm gray hover.
+   ============================================================ */
+.saas-sidebar .nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.saas-sidebar .nav-icon svg { width: 15px; height: 15px; }
+.saas-sidebar .nav-link-active .nav-icon,
+.saas-sidebar .nav-group-toggle:hover .nav-icon { color: #fff; }
+
+.saas-sidebar .nav-link,
+.saas-sidebar .nav-group-toggle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  border-radius: 10px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+/* sub-items: plain indented text (no badge), like QBO submenus */
+.saas-sidebar .nav-accordion .nav-group-items .nav-link .nav-icon { display: none; }
+.saas-sidebar .nav-accordion .nav-group-items .nav-link { padding-left: 50px; font-weight: 400; }
+
+/* calm neutral hover + active (gray pill, not blue) */
+.saas-sidebar .nav-link:hover,
+.saas-sidebar .nav-group-toggle:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.saas-sidebar .nav-link-active { background: color-mix(in srgb, var(--text) 9%, transparent) !important; color: var(--text); }
+
+/* ============================================================
+   REFERENCE THEME (reference.webp) — TEAL: light airy background,
+   white rounded soft-shadow cards, teal accent, pill buttons,
+   bold titles, and a teal-gradient sidebar rail with white icons
+   (active = white pill). Applies app-wide.
+   ============================================================ */
+
+/* ---- Tokens: light / default — cool-light surfaces + teal accent ---- */
+:root,
+:root[data-theme="light"] {
+  --bg-app: #edeefa; --bg-primary: #edeefa; --bg: #edeefa; --bg2: #e6e5fb;
+  --surface: #ffffff; --surface2: #faf9fe; --surface3: #edeefa;
+  --card-bg: #ffffff; --bg-panel: #ffffff; --bg-panel-strong: #ffffff;
+  --border: #e6e4f2; --border2: #d9d7ea;
+  --text: #14131f; --text-primary: #14131f; --text2: #3c3a52; --text-secondary: #3c3a52; --text3: #8b8a9c;
+  --primary: var(--accent); --primary-strong: var(--accent); --primary-hover: color-mix(in srgb, var(--accent), #000 14%);
+  --primary-soft: var(--accent-soft); --primary-text: var(--accent-text);
+  --btn-primary-bg: var(--accent); --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #ffffff; --btn-secondary-text: #14131f; --btn-secondary-border: #e6e4f2;
+  --nav-link-color: rgba(255,255,255,0.9); --nav-hover-bg: rgba(255,255,255,0.12); --nav-active-bg: #ffffff;
+  --shadow: 0 1px 2px rgba(20,19,31,0.04), 0 6px 18px rgba(20,19,31,0.07);
+}
+
+/* ---- Tokens: dark — TetriQ teal-tinted dark surfaces. Must re-declare every
+   surface/text/border token, because the light block above is scoped to bare
+   `:root` (which also matches in dark) — so anything not overridden here would
+   leak its light value into dark mode. ---- */
+:root[data-theme="dark"] {
+  --bg-app: #08080f; --bg-primary: #08080f; --bg: #08080f; --bg2: #12111f;
+  --surface: #1a1930; --surface2: #12111f; --surface3: #211f36;
+  --card-bg: #1a1930; --bg-panel: #1a1930; --bg-panel-strong: #12111f;
+  --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.14);
+  --text: #f2f1f8; --text-primary: #f2f1f8; --text2: #c4c2d8; --text-secondary: #c4c2d8; --text3: #8b89a3;
+  --primary: var(--accent); --primary-strong: var(--accent); --primary-hover: color-mix(in srgb, var(--accent), #fff 12%);
+  --primary-soft: var(--accent-soft); --primary-text: var(--accent-text);
+  --btn-primary-bg: var(--accent); --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #1a1930; --btn-secondary-text: #f2f1f8; --btn-secondary-border: rgba(255,255,255,0.14);
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 22px rgba(0,0,0,0.5);
+}
+
+/* ---- Rounded, soft-shadow cards ---- */
+.table-card, .glass-card, .dbw, .db-card, .stat-card, .db-kpi, .dbw-funnel-box {
+  border-radius: 16px !important;
+}
+
+/* ---- Pill buttons: teal primary, white outline secondary ---- */
+.primary-btn {
+  background: var(--accent) !important; color: var(--accent-contrast, #fff) !important;
+  border: none !important; border-radius: var(--r-btn, 14px) !important; box-shadow: var(--shadow-btn) !important; font-weight: 700;
+}
+.primary-btn:hover { background: var(--primary-hover) !important; transform: none; }
+.secondary-btn {
+  background: var(--surface) !important; color: var(--text) !important;
+  border: 1px solid var(--border) !important; border-radius: var(--r-btn, 14px) !important; box-shadow: none !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+:root[data-theme="dark"] .secondary-btn { background: var(--bg-panel) !important; border-color: var(--border) !important; color: var(--text) !important; }
+
+.secondary-btn:hover:not(:disabled) {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+.asset-slot-tools { opacity: 0; transition: opacity .15s ease; }
+.asset-slot:hover .asset-slot-tools,
+.asset-slot:focus-within .asset-slot-tools { opacity: 1; }
+.asset-slot-tools button:hover:not(:disabled) {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.token-chip:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.secondary-btn.is-danger:hover:not(:disabled) {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #fff !important;
+}
+
+/* ---- Bold reference-style page titles ---- */
+.page-title, .db-title { font-size: 28px !important; font-weight: 700 !important; letter-spacing: -0.02em; }
+
+/* ---- Teal-gradient sidebar rail with white text/icons ---- */
+.saas-sidebar {
+  background: linear-gradient(180deg, var(--accent) 0%, color-mix(in srgb, var(--accent), #000 35%) 100%) !important;
+  border-radius: 0 22px 22px 0;
+  color: rgba(255,255,255,0.92);
+}
+.sidebar-brand-panel, .sidebar-menu-panel {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+.saas-sidebar .nav-link, .saas-sidebar .nav-group-toggle { color: rgba(255,255,255,0.9) !important; }
+.saas-sidebar .nav-icon { background: transparent !important; color: rgba(255,255,255,0.85) !important; width: 20px !important; height: 20px !important; }
+.saas-sidebar .nav-icon svg { width: 18px !important; height: 18px !important; }
+.saas-sidebar .nav-link:hover, .saas-sidebar .nav-group-toggle:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+.saas-sidebar .nav-link-active { background: #ffffff !important; color: var(--primary) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.saas-sidebar .nav-link-active .nav-icon,
+.saas-sidebar .nav-group-toggle:hover .nav-icon { color: var(--primary) !important; }
+.saas-sidebar .nav-group-toggle:hover .nav-icon { color: #fff !important; }
+.sidebar-logout { color: #fff !important; border-color: rgba(255,255,255,0.35) !important; background: rgba(255,255,255,0.08) !important; }
+
+/* ---- Teal focus ring on inputs/selects ---- */
+.filter-select:focus, .search-input:focus, .db-select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent) !important;
+}
+
+/* ============================================================
+   COLLAPSIBLE SIDEBAR — icon rail that auto-expands on hover.
+   Collapsed (pinned): 78px rail showing icons only.
+   Hover while collapsed: overlay-expands to full width + labels.
+   Desktop only (min-width: 981px) so mobile off-canvas is intact.
+   ============================================================ */
+
+.sidebar-logout { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.sidebar-logout-icon { display: inline-flex; align-items: center; justify-content: center; }
+.sidebar-logout-icon svg { width: 16px; height: 16px; }
+.saas-sidebar .nav-link-text, .sidebar-logout-text { white-space: nowrap; }
+
+@media (min-width: 981px) {
+  /* Collapsed: narrow the reserved column to a 78px icon rail.
+     The sidebar stays in flow (sticky) so page content reserves its space. */
+  .saas-app-shell.is-collapsed { grid-template-columns: 78px 1fr; transition: grid-template-columns 0.18s ease; }
+  .saas-app-shell.is-collapsed .saas-sidebar {
+    width: 78px; padding: 14px 10px;
+    z-index: 60;
+    transition: width 0.18s ease, padding 0.18s ease, box-shadow 0.18s ease;
+  }
+  /* Auto-expand on hover — the rail widens AND the reserved grid column grows
+     with it, so page content shifts over (push, not overlay) to adjust. */
+  .saas-app-shell.is-collapsed:has(.saas-sidebar:hover) { grid-template-columns: 244px 1fr; }
+  .saas-app-shell.is-collapsed .saas-sidebar:hover {
+    width: 244px; padding: 14px;
+    box-shadow: 10px 0 34px rgba(8, 40, 36, 0.26);
+  }
+
+  /* Collapsed + not hovered: hide all text, show only centered icons */
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-link-text,
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-group-chev,
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .brand-text,
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .sidebar-logout-text {
+    display: none;
+  }
+  /* The rail leaves ~54px, so the wordmark rides down to fit the width. */
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .brand-logo {
+    max-width: 54px;
+    height: auto;
+  }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-group-items { display: none !important; }
+  /* Reclaim horizontal space so a centered pill fits inside the 78px rail.
+     Nested paddings (panel + scroll gutter) otherwise leave only ~32px, which
+     clipped the pill against the rail's overflow:hidden edge. */
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .sidebar-menu-panel { padding: 6px; }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .sidebar-nav-scroll { padding-right: 0; }
+  /* Center each item as a fixed-size pill with side gutters so its rounded
+     corners are fully visible and never touch the rail edge. */
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-link,
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-group-toggle {
+    justify-content: center;
+    width: 40px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 12px;
+  }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .sidebar-logout {
+    justify-content: center; padding-left: 10px; padding-right: 10px;
+  }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .brand-block { justify-content: center; }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .sidebar-brand-panel { justify-content: center; }
+
+  /* Collapsed + not hovered: the active section's group icon gets the same
+     white active pill that a direct link (Home) gets, since its sub-item is
+     hidden in the rail. */
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-group-active > .nav-group-toggle {
+    background: #fff !important;
+    color: var(--primary) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .saas-app-shell.is-collapsed .saas-sidebar:not(:hover) .nav-group-active > .nav-group-toggle .nav-icon {
+    color: var(--primary) !important;
+  }
+}
+
+/* ============================================================
+   ATTACHMENTS FIELD — document upload control on invoice/bill forms
+   ============================================================ */
+.attachments-field { display: grid; gap: 8px; }
+.attachments-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.attachments-hint { font-size: 12px; color: var(--text2); }
+.attachments-add-btn {
+  justify-self: start;
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px dashed var(--border2); background: var(--surface2);
+  color: var(--primary-text, var(--primary)); font-weight: 600; font-size: 13px;
+  padding: 8px 14px; border-radius: 10px; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.attachments-add-btn:hover { border-color: var(--primary); background: var(--primary-soft); }
+.attachments-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.attachments-item {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 12px; font-size: 13px;
+}
+.attachments-item.is-pending { border-style: dashed; }
+.attachments-name {
+  text-align: left; background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--primary-text, var(--primary)); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.attachments-item.is-pending .attachments-name { color: var(--text); cursor: default; font-weight: 500; }
+.attachments-size { color: var(--text3); font-size: 12px; white-space: nowrap; }
+.attachments-remove {
+  border: none; background: none; cursor: pointer; color: var(--text3);
+  font-size: 18px; line-height: 1; width: 22px; height: 22px; border-radius: 6px;
+}
+.attachments-remove:hover { color: var(--danger); background: var(--danger-soft); }
+.attachments-empty { font-size: 12px; color: var(--text3); }
+
+/* ---- Multi-bill picker on the Vendor Payment modal ---- */
+.payments-bill-picker { display: grid; gap: 8px; }
+.payments-bill-picker-list {
+  max-height: 220px; overflow-y: auto; display: grid; gap: 4px;
+  border: 1px solid var(--border); border-radius: 10px; padding: 6px; background: var(--surface2);
+}
+.payments-bill-picker-row {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.payments-bill-picker-row:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.payments-bill-picker-row.is-checked { background: var(--primary-soft); }
+.payments-bill-picker-row.is-disabled { opacity: 0.45; cursor: not-allowed; }
+.payments-bill-picker-row .pbp-main { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.payments-bill-picker-row .pbp-bal { font-variant-numeric: tabular-nums; color: var(--text2); white-space: nowrap; }
+
+/* ---- Read-only attachments viewer (on Invoice/Bill view modals) ---- */
+.attachments-viewer { display: grid; gap: 8px; }
+.attachments-viewer-head {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text2); display: flex; align-items: center; gap: 8px;
+}
+.attachments-viewer-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+  padding: 0 6px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-text, var(--primary));
+  font-size: 11px; font-weight: 700;
+}
+
+/* ---- In-app attachment preview popup (portal; above modals) ---- */
+.attachment-preview-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(15, 23, 25, 0.62); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.attachment-preview-dialog {
+  width: min(960px, 96vw); height: min(88vh, 1000px);
+  background: var(--surface); border-radius: 14px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.attachment-preview-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.attachment-preview-title {
+  font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.attachment-preview-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.attachment-preview-close {
+  border: none; background: none; cursor: pointer; color: var(--text2);
+  font-size: 24px; line-height: 1; width: 32px; height: 32px; border-radius: 8px;
+}
+.attachment-preview-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.attachment-preview-body { flex: 1; min-height: 0; background: var(--surface3); display: flex; }
+.attachment-preview-frame { width: 100%; height: 100%; border: none; }
+.attachment-preview-img { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; }
+.attachment-preview-other {
+  margin: auto; text-align: center; display: grid; gap: 14px; color: var(--text2); padding: 24px;
+}
+
+/* ============================================================
+   REFERENCE POLISH v2 — complete the reference.webp look across
+   every page. Palette kept TEAL (primary) + AMBER (accent) per the
+   chosen direction. This block is loaded last, so it is the single
+   authoritative source for the shared component look — the older
+   blue/teal rules in global.css/saas.css are superseded here.
+   ============================================================ */
+
+/* ---- Canonical radii (reference uses generous rounding) ---- */
+:root, :root[data-theme="light"], :root[data-theme="dark"] {
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+}
+
+/* ---- Teal focus rings everywhere (kills leftover hardcoded blue
+   rings in global.css on .form-control / .search-input) ---- */
+.form-control:focus,
+.search-input:focus,
+.modal-textarea:focus,
+.filter-select:focus,
+.db-select:focus,
+.searchable-select-input:focus,
+.searchable-select-input:focus-visible {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent) !important;
+}
+
+/* ---- Every button variant becomes a reference-style pill. The shared
+   Modal/ConfirmDialog use .btn.btn-primary/.btn-secondary/.btn-danger,
+   which the earlier .primary-btn/.secondary-btn pill rules never touched. ---- */
+.btn {
+  border-radius: var(--radius-pill);
+  height: 38px;
+  font-weight: 600;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.btn-sm { height: 32px; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover:not(:disabled) { background: var(--surface2); }
+:root[data-theme="dark"] .btn-secondary { background: var(--surface2); border-color: var(--border2); }
+.btn-danger { background: var(--danger-soft); color: var(--danger); }
+.btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+.btn-success { background: var(--success-soft); color: var(--success); }
+
+/* ---- Modals & drawers: rounded, soft elevation, calm chrome ---- */
+.modal, .modal-card { border-radius: 20px !important; box-shadow: 0 24px 60px rgba(8, 40, 36, 0.22) !important; }
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .modal-card { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55) !important; }
+.modal-header, .modal-footer { border-color: var(--border); }
+.modal-title, .drawer-title { font-weight: 700; letter-spacing: -0.01em; }
+.modal-close, .drawer-close { border-radius: 10px; }
+.modal-close:hover, .drawer-close:hover { background: color-mix(in srgb, var(--text) 7%, transparent); }
+.drawer-panel { border-radius: 20px 0 0 20px; box-shadow: -18px 0 50px rgba(8, 40, 36, 0.18); }
+
+/* ---- Form labels: calmer than the all-caps bold global default ---- */
+.form-label { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: normal; color: var(--text2); }
+
+/* ---- Badges: soft rounded status pills ---- */
+.badge { border-radius: var(--radius-pill); padding: 3px 10px; font-weight: 600; letter-spacing: 0.03em; }
+.role-chip, .db-pill { border-radius: var(--radius-pill); }
+
+/* ---- Cards: subtle tactile lift on hover (reference cards feel alive) ---- */
+.dbw, .db-card, .db-kpi, .table-card, .glass-card, .stat-card {
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+.dbw:hover, .db-card:hover, .db-kpi:hover, .stat-card:hover {
+  box-shadow: 0 10px 28px rgba(8, 40, 36, 0.10);
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+:root[data-theme="dark"] .dbw:hover,
+:root[data-theme="dark"] .db-card:hover,
+:root[data-theme="dark"] .db-kpi:hover,
+:root[data-theme="dark"] .stat-card:hover { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+
+/* ---- Tables: rounded clipped container + teal row hover ---- */
+.table-card, .glass-card { overflow: hidden; }
+.saas-table tbody tr { transition: background .12s ease; }
+.saas-table tbody tr:hover td { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+
+/* ---- Filter chips / segmented toggles pick up the teal accent ---- */
+.dbw-chip:hover { border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); color: var(--primary); }
+
+/* ---- Inline date-range filter (From/To) ---- */
+.db-range { display: inline-flex; align-items: center; gap: 6px; }
+.db-range-label { font-size: 12px; color: var(--text2); font-weight: 600; }
+.db-range .filter-select { width: auto; }
+
+/* ---- Scrollbars tinted to the theme (reference feels cohesive) ---- */
+* { scrollbar-color: color-mix(in srgb, var(--primary) 30%, var(--border)) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--primary) 26%, var(--border)); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--primary) 42%, var(--border)); background-clip: padding-box; }
+
+/* ===== Accounting plain-English helpers (PageGuide + InfoTip) ===== */
+.acct-guide {
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  border-radius: var(--radius-lg, 14px);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.acct-guide-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 12px 16px; text-align: left; color: var(--text1);
+}
+.acct-guide-badge {
+  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary); color: #fff; font-size: 12px; font-weight: 700;
+  font-style: italic; font-family: Georgia, "Times New Roman", serif;
+}
+.acct-guide-title { font-weight: 700; font-size: 14px; }
+.acct-guide-toggle {
+  margin-left: auto; font-size: 12px; font-weight: 600; color: var(--primary);
+}
+.acct-guide-body {
+  padding: 0 16px 16px 46px; color: var(--text2); font-size: 13.5px; line-height: 1.6;
+}
+.acct-guide-lead { margin: 0 0 10px; }
+.acct-guide-points { margin: 0; display: grid; gap: 8px; }
+.acct-guide-point { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: start; }
+.acct-guide-point dt { font-weight: 700; color: var(--text1); }
+.acct-guide-point dd { margin: 0; }
+@media (max-width: 640px) {
+  .acct-guide-body { padding-left: 16px; }
+  .acct-guide-point { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* Inline "?" definition bubble */
+.acct-tip {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-left: 5px; border-radius: 50%; cursor: help;
+  font-size: 10px; font-weight: 700; vertical-align: middle;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 36%, var(--border));
+}
+.acct-tip::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 260px; white-space: normal; text-align: left;
+  background: var(--text1, #0f172a); color: var(--surface, #fff);
+  padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22); z-index: 60;
+  opacity: 0; visibility: hidden; transition: opacity .12s ease;
+  pointer-events: none;
+}
+.acct-tip:hover::after, .acct-tip:focus::after { opacity: 1; visibility: visible; }
+
+/* ===== Manual journal entry form ===== */
+.je-lines td { padding: 6px 8px; vertical-align: top; }
+.je-lines .form-group { margin-bottom: 0; }
+.je-lines .form-control { height: 38px; }
+.je-balance {
+  margin-right: auto; font-size: 13px; font-weight: 600;
+  padding: 6px 10px; border-radius: 8px;
+}
+.je-balance.is-ok { color: #0f7a4f; background: color-mix(in srgb, #16a34a 14%, transparent); }
+.je-balance.is-off { color: #b42318; background: color-mix(in srgb, #ef4444 12%, transparent); }
+
+/* ===== Chart of Accounts + Account register ===== */
+.linklike {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--primary); font: inherit; text-align: left;
+}
+.linklike:hover { text-decoration: underline; }
+.is-inactive-row td { opacity: 0.55; }
+.je-opening-row td, .je-closing-row td {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+.je-closing-row td { border-top: 2px solid color-mix(in srgb, var(--primary) 30%, var(--border)); }
+
+/* ===== Compact inline action buttons (timesheets) ===== */
+.primary-btn.xs, .secondary-btn.xs, .btn.xs {
+  padding: 4px 10px; font-size: 12px; border-radius: 8px; line-height: 1.3;
+}
+
+/* ===== Accounting Overview section accent tokens (theme-aware) ===== */
+:root {
+  --sect-reports:#2b6fd6; --sect-journal:#0a9a9a; --sect-coa:#7c4dff;
+  --sect-period:#e8830c; --sect-banking:#2ca01c; --sect-on:#ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sect-reports:#5b93e6; --sect-journal:#2fc2c2; --sect-coa:#9b78ff;
+    --sect-period:#f0a03e; --sect-banking:#54c159; --sect-on:#0f1017;
+  }
+}
+:root[data-theme="dark"] {
+  --sect-reports:#5b93e6; --sect-journal:#2fc2c2; --sect-coa:#9b78ff;
+  --sect-period:#f0a03e; --sect-banking:#54c159; --sect-on:#0f1017;
+}
+:root[data-theme="light"] {
+  --sect-reports:#2b6fd6; --sect-journal:#0a9a9a; --sect-coa:#7c4dff;
+  --sect-period:#e8830c; --sect-banking:#2ca01c; --sect-on:#ffffff;
+}

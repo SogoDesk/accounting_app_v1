@@ -1,0 +1,233 @@
+/* Bills & vendor payments — Step 4 restyle. Layout only; colour via tokens. */
+
+.bills-v2 { display: flex; flex-direction: column; gap: 18px; }
+
+/* Page header ---------------------------------------------------- */
+.bills-head { display: flex; align-items: flex-start; gap: 16px; }
+.bills-head-main { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
+.bills-back {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--icon); display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+.bills-back:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.bills-title { font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); }
+.bills-sub { margin-top: 7px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.bills-head-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+
+.bills-btn {
+  height: 46px; padding: 0 18px; border-radius: var(--r-btn); font-family: var(--font-ui);
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.bills-btn:disabled { opacity: .55; cursor: not-allowed; }
+.bills-btn-secondary { background: var(--surface); color: var(--ink-2); font-weight: 700; font-size: 13.5px; }
+.bills-btn-secondary:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.bills-btn-primary {
+  background: var(--accent); color: var(--accent-contrast); border-color: transparent;
+  font-weight: 700; font-size: 14px; box-shadow: var(--shadow-btn);
+}
+.bills-btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-accent); }
+
+/* KPI row -------------------------------------------------------- */
+.bills-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* Grid blow-out guard: let each card shrink to its track and clip long
+   numbers with an ellipsis instead of forcing the whole grid wider. */
+.bills-kpis > * { min-width: 0; }
+.bills-kpis .sg-statcard-value { min-width: 0; overflow: hidden; }
+.bills-kpis .sg-statcard-num { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Filter row ----------------------------------------------------- */
+.bills-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bills-pill {
+  position: relative; height: 42px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center;
+}
+.bills-pill select,
+.bills-pill input {
+  appearance: none; -webkit-appearance: none; border: none; background: transparent;
+  font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  height: 100%; padding: 0 34px 0 15px; cursor: pointer; outline: none; min-width: 130px;
+}
+.bills-pill.is-active { border-color: var(--accent); background: var(--accent-soft); }
+.bills-pill.is-active select { color: var(--accent-text); font-weight: 700; }
+.bills-pill-chev { position: absolute; right: 12px; pointer-events: none; color: var(--icon); display: inline-flex; }
+.bills-pill.is-active .bills-pill-chev { color: var(--accent-text); }
+.bills-pill-search { flex: 1; min-width: 180px; }
+.bills-pill-search input { cursor: text; padding-right: 15px; width: 100%; }
+.bills-pill-search .bills-pill-ico { position: absolute; right: 14px; color: var(--icon); display: inline-flex; pointer-events: none; }
+
+/* Content grid: list + rail ------------------------------------- */
+.bills-content { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .bills-content { grid-template-columns: 1fr; } }
+
+.bills-panel {
+  background: var(--surface); border: 1px solid var(--border-soft);
+  border-radius: var(--r-panel); padding: 20px 20px 22px; box-shadow: var(--shadow-card);
+  /* Never clip the table behind the rounded edge — the inner .sg-table scrolls. */
+  min-width: 0; overflow: visible;
+}
+/* Table overflow fix: the DataTable's own .sg-table owns horizontal scrolling
+   so columns are never cut off by the panel. min-width keeps columns readable;
+   when the panel is narrower than that, the user gets a scrollbar inside the
+   table (its rounded corners already clip the scrolled content cleanly). */
+.bills-panel .sg-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bills-panel .sg-table table { min-width: 900px; }
+.bills-panel-icons { display: inline-flex; align-items: center; gap: 4px; }
+.bills-mini-btn {
+  width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--icon); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.bills-mini-btn:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+
+/* Vendor cell ---------------------------------------------------- */
+.bills-vend { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.bills-avatar {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent-text);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+}
+.bills-vend-txt { display: flex; flex-direction: column; min-width: 0; }
+.bills-vend-name { font-weight: 700; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bills-vend-sub { font-weight: 500; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bills-due-over { color: var(--danger-text); }
+
+.bills-kebab {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid transparent; background: transparent;
+  color: var(--icon); cursor: pointer; font-weight: 800; letter-spacing: 1px; line-height: 1;
+}
+.bills-kebab:hover { background: var(--surface-sunken); border-color: var(--border); }
+.bills-chip-btn { background: none; border: none; padding: 0; cursor: pointer; }
+
+/* Right rail ----------------------------------------------------- */
+.bills-rail { display: flex; flex-direction: column; gap: 16px; }
+.bills-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.bills-card-title { font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); }
+.bills-card-link { font-size: 12px; font-weight: 700; color: var(--accent-text); background: none; border: none; cursor: pointer; padding: 0; }
+
+.bills-appr-list { display: flex; flex-direction: column; gap: 10px; }
+.bills-appr {
+  min-width: 0;
+  border: 1px solid var(--border-hair); border-radius: var(--r-tile);
+  background: var(--surface-sunken); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px;
+}
+.bills-appr.is-top { background: var(--accent); border-color: transparent; }
+.bills-appr-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bills-appr-num { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; color: var(--ink); }
+.bills-appr-amt { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bills-appr-vendor { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.bills-appr-when { font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+.bills-appr.is-top .bills-appr-num,
+.bills-appr.is-top .bills-appr-amt { color: var(--accent-contrast); }
+.bills-appr.is-top .bills-appr-vendor { color: color-mix(in srgb, var(--accent-contrast) 92%, transparent); }
+.bills-appr.is-top .bills-appr-when { color: color-mix(in srgb, var(--accent-contrast) 74%, transparent); }
+
+.bills-appr-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.bills-appr-pill {
+  flex: 1 1 0; min-width: 0; height: 30px; padding: 0 14px; border-radius: var(--r-pill);
+  font-family: var(--font-ui); text-align: center; justify-content: center;
+  font-weight: 700; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+}
+.bills-appr-pill.is-approve { background: var(--success-tint); color: var(--success-text); border-color: transparent; }
+.bills-appr-pill.is-reject { background: var(--surface); color: var(--danger-text); border-color: var(--border); }
+.bills-appr.is-top .bills-appr-pill.is-approve { background: var(--accent-contrast); color: var(--accent-text); }
+.bills-appr.is-top .bills-appr-pill.is-reject { background: color-mix(in srgb, var(--accent-contrast) 18%, transparent); color: var(--accent-contrast); border-color: color-mix(in srgb, var(--accent-contrast) 40%, transparent); }
+.bills-appr-empty { font-size: 12.5px; color: var(--muted); padding: 6px 2px; }
+
+.bills-pay-list { display: flex; flex-direction: column; }
+.bills-pay {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 2px; border-top: 1px solid var(--border-hair-row);
+}
+.bills-pay:first-child { border-top: none; }
+.bills-pay-main { display: flex; flex-direction: column; min-width: 0; }
+.bills-pay-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.bills-pay-ref { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--muted); }
+.bills-pay-amt { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Responsive ----------------------------------------------------- */
+/* NB: the two-column list+rail grid (.bills-content) already collapses
+   to a single column at max-width:1120px above, so the rail stacks
+   below the list on tablet/phone — no extra rule needed here. */
+@media (max-width: 900px) {
+  /* 4-up KPI row -> 2-up */
+  .bills-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 520px) {
+  /* 2-up KPI row -> single column */
+  .bills-kpis { grid-template-columns: 1fr; }
+}
+
+/* Clickable status chip + status dropdown --------------------------------- */
+.bills-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--r-pill);
+}
+.bills-status-caret {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+.bills-status-btn:hover .bills-status-caret { opacity: 1; }
+.bills-status-btn.is-open .bills-status-caret { transform: rotate(180deg); opacity: 1; }
+
+/* Clickable bill number → opens the view modal. */
+.bills-number-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--accent-text);
+  text-align: left;
+  border-radius: 4px;
+}
+.bills-number-btn:hover { text-decoration: underline; }
+.bills-number-btn:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+.bills-status-menu {
+  min-width: 180px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bills-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.bills-status-item:hover { background: var(--surface-sunken); }
+.bills-status-item.is-current { cursor: default; background: var(--accent-soft); }
+.bills-status-item:disabled { cursor: default; }
+.bills-status-check { color: var(--accent-text); font-weight: 800; font-size: 13px; }
+
+@media (max-width: 640px) {
+  /* Header wraps; actions drop to a full-width second line */
+  .bills-head { flex-wrap: wrap; gap: 12px; }
+  .bills-head-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .bills-title { font-size: 28px; }
+  /* Search pill takes the full row under the wrapped filter pills */
+  .bills-pill-search { flex-basis: 100%; min-width: 0; }
+  /* Ease panel padding so the table isn't squeezed */
+  .bills-panel { padding: 16px 14px 18px; }
+}

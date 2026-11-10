@@ -1,0 +1,322 @@
+/* Invoices — Step 4 visual restyle. Scoped under .invoices-refresh so nothing
+   leaks to other screens. Colour comes only from design tokens. */
+
+.invoices-refresh {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Page header ------------------------------------------------- */
+.invoices-refresh .inv-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.invoices-refresh .inv-head-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+.invoices-refresh .inv-back {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.invoices-refresh .inv-back:hover { border-color: var(--accent); color: var(--accent-text); }
+.invoices-refresh .inv-title {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--ink);
+}
+.invoices-refresh .inv-subtitle {
+  margin-top: 7px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--muted);
+}
+.invoices-refresh .inv-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.invoices-refresh .inv-iconbtn {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.invoices-refresh .inv-iconbtn:hover { border-color: var(--accent); color: var(--accent-text); }
+.invoices-refresh .inv-iconbtn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* ---- KPI row ----------------------------------------------------- */
+.invoices-refresh .inv-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1080px) {
+  .invoices-refresh .inv-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 640px) {
+  .invoices-refresh .inv-kpis { grid-template-columns: 1fr; }
+}
+
+/* ---- Filter row -------------------------------------------------- */
+.invoices-refresh .inv-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.invoices-refresh .inv-activefilters {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.invoices-refresh .inv-activefilters .inv-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  display: inline-grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+}
+.invoices-refresh .inv-count-muted {
+  margin-left: auto;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* Native <select> rendered invisibly over a FilterPill so the pill keeps the
+   real dropdown behaviour and every existing handler is preserved. */
+.invoices-refresh .inv-pill-wrap { position: relative; display: inline-flex; }
+.invoices-refresh .inv-pill-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+}
+
+/* Search field styled as a pill to match the filter row. */
+.invoices-refresh .inv-search {
+  height: 42px;
+  min-width: 230px;
+  flex: 1 1 230px;
+  max-width: 340px;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.invoices-refresh .inv-search::placeholder { color: var(--faint); font-weight: 500; }
+.invoices-refresh .inv-search:focus { outline: none; border-color: var(--accent); background: var(--accent-soft); }
+
+.invoices-refresh .inv-date {
+  height: 42px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.invoices-refresh .inv-date:focus { outline: none; border-color: var(--accent); }
+
+.invoices-refresh .inv-reset {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.invoices-refresh .inv-reset:hover { border-color: var(--accent); color: var(--accent-text); }
+
+/* ---- List panel -------------------------------------------------- */
+.invoices-refresh .inv-panel {
+  border-radius: var(--r-panel);
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  padding: 20px 20px 22px;
+}
+
+/* Cells rendered with stacked main + sub line inside a DataTable cell. */
+.invoices-refresh .inv-cellstack { display: flex; flex-direction: column; gap: 2px; }
+.invoices-refresh .inv-cell-main { font-weight: 700; font-size: 13px; color: var(--ink); }
+.invoices-refresh .inv-cell-link { color: var(--accent-text); text-decoration: none; }
+.invoices-refresh .inv-cell-link:hover { text-decoration: underline; }
+.invoices-refresh .inv-cell-sub {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--muted);
+}
+.invoices-refresh .inv-mono { font-family: var(--font-mono); }
+.invoices-refresh .inv-danger { color: var(--danger-text); font-weight: 700; }
+.invoices-refresh .inv-success-fig { color: var(--success-text); }
+
+.invoices-refresh .inv-kebab {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-btn);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--icon);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+.invoices-refresh .inv-kebab:hover { border-color: var(--border); background: var(--surface-sunken); }
+
+.invoices-refresh .inv-foot-note { color: var(--muted); font-weight: 500; }
+
+/* Pagination row */
+.invoices-refresh .inv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+.invoices-refresh .inv-pagination .pagination-info {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---- Responsive: tablet / small laptop --------------------------- */
+@media (max-width: 1080px) {
+  /* Header may wrap so the action buttons drop below the title block. */
+  .invoices-refresh .inv-header { flex-wrap: wrap; }
+  .invoices-refresh .inv-actions { margin-left: auto; }
+  .invoices-refresh .inv-panel { padding: 18px; }
+}
+
+/* ---- Responsive: phone ------------------------------------------- */
+@media (max-width: 640px) {
+  .invoices-refresh { gap: 14px; }
+  /* Title steps down and actions take the full width on their own line. */
+  .invoices-refresh .inv-title { font-size: 28px; }
+  .invoices-refresh .inv-actions {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  /* Search grows to fill the wrapped filter row. */
+  .invoices-refresh .inv-search {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+  .invoices-refresh .inv-count-muted { margin-left: 0; width: 100%; }
+  .invoices-refresh .inv-panel { padding: 14px; }
+}
+
+/* Clickable status chip + status dropdown --------------------------------- */
+.inv-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--r-pill);
+}
+.inv-status-caret {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+.inv-status-btn:hover .inv-status-caret { opacity: 1; }
+.inv-status-btn.is-open .inv-status-caret { transform: rotate(180deg); opacity: 1; }
+
+/* Clickable invoice number → opens the view modal. */
+.inv-number-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--accent-text);
+  text-align: left;
+  border-radius: 4px;
+}
+.inv-number-btn:hover { text-decoration: underline; }
+.inv-number-btn:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+.invoice-status-menu {
+  min-width: 180px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.invoice-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.invoice-status-item:hover { background: var(--surface-sunken); }
+.invoice-status-item.is-current { cursor: default; background: var(--accent-soft); }
+.invoice-status-item:disabled { cursor: default; }
+.invoice-status-check { color: var(--accent-text); font-weight: 800; font-size: 13px; }

@@ -1,0 +1,120 @@
+/* Journal Entries — Step 4 restyle (scoped, token-only colour) */
+
+.je-page { font-family: var(--font-ui); }
+
+/* --- Page header ------------------------------------------------- */
+.je-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.je-back {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.je-back:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.je-titles { min-width: 0; }
+.je-title { margin: 0; font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -0.03em; color: var(--ink); }
+.je-sub { margin: 7px 0 0; font-weight: 500; font-size: 13px; color: var(--muted); }
+.je-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
+
+.je-btn {
+  height: 46px; padding: 0 18px; border-radius: var(--r-btn);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-ui); font-weight: 700; font-size: 13.5px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+  cursor: pointer; white-space: nowrap;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.je-btn:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.je-iconbtn { width: 46px; height: 46px; padding: 0; justify-content: center; color: var(--icon); }
+.je-btn-primary { border: none; background: var(--accent); color: var(--accent-contrast); font-size: 14px; box-shadow: var(--shadow-btn); }
+.je-btn-primary:hover { box-shadow: var(--shadow-accent); }
+.je-btn svg, .je-iconbtn svg { flex: none; }
+
+/* --- Filter row -------------------------------------------------- */
+.je-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.je-fpill {
+  position: relative; display: inline-flex; align-items: center;
+  height: 42px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.je-fpill.is-active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+.je-fselect {
+  appearance: none; -webkit-appearance: none; border: none; background: transparent;
+  height: 42px; padding: 0 34px 0 15px; border-radius: var(--r-pill);
+  font-family: var(--font-ui); font-weight: 600; font-size: 12.5px; color: var(--ink-2);
+  cursor: pointer; outline: none;
+}
+.je-fpill.is-active .je-fselect { color: var(--accent-text); font-weight: 700; }
+.je-fpill::after {
+  content: ""; position: absolute; right: 14px; width: 8px; height: 8px;
+  border-right: 1.8px solid var(--icon); border-bottom: 1.8px solid var(--icon);
+  transform: rotate(45deg) translateY(-2px); pointer-events: none;
+}
+.je-date {
+  height: 42px; padding: 0 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+  font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--ink-2);
+  outline: none;
+}
+
+/* --- Panels ------------------------------------------------------ */
+.je-panel {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--r-panel); box-shadow: var(--shadow-card);
+  padding: 20px 20px 22px; margin-bottom: 16px;
+}
+.je-panel-head { margin-bottom: 14px; }
+
+/* entry list cells */
+.je-no { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; color: var(--ink); }
+.je-desc { font-weight: 500; font-size: 12.5px; color: var(--ink-2); }
+.je-date-cell { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--muted); }
+.je-amt { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* detail line account codes read as accent-coloured references */
+.je-acct-code { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; color: var(--accent-text); margin-right: 10px; }
+
+/* --- Detail panel ------------------------------------------------ */
+.je-detail-top { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.je-detail-no { font-family: var(--font-mono); font-weight: 800; font-size: 18px; letter-spacing: -.01em; color: var(--ink); }
+.je-detail-meta { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.je-meta-text { font-weight: 500; font-size: 11.5px; color: var(--muted); }
+.je-meta-text .mono { font-family: var(--font-mono); }
+.je-detail-desc { margin: 2px 0 14px; font-weight: 500; font-size: 12.5px; color: var(--muted); }
+
+.je-hash {
+  margin-top: 14px; padding: 12px 16px; border-radius: var(--r-tile);
+  background: var(--surface-sunken); border: 1px solid var(--border-hair);
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--faint);
+  word-break: break-all; line-height: 1.6;
+}
+.je-hash .arrow { color: var(--muted); padding: 0 4px; }
+.je-hash .k { color: var(--muted); }
+
+.je-state {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--r-panel); padding: 24px; color: var(--muted);
+  font-family: var(--font-ui); font-size: 13px;
+}
+.je-detail-loading { padding: 20px 4px; color: var(--muted); font-size: 13px; }
+
+/* --- Responsive ------------------------------------------------- */
+@media (max-width: 1080px) {
+  .je-head { flex-wrap: wrap; }
+  .je-actions { margin-left: 0; flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .je-head { gap: 12px; margin-bottom: 18px; }
+  /* actions drop below the title */
+  .je-actions { flex-basis: 100%; margin-left: 0; }
+  .je-title { font-size: 28px; }
+  /* filter pills + date fields stack full width */
+  .je-fpill, .je-fselect, .je-date { width: 100%; }
+  .je-panel { padding: 14px 14px 16px; }
+  /* detail meta drops under the entry number rather than pushing off-screen */
+  .je-detail-meta { margin-left: 0; flex-basis: 100%; }
+}

@@ -1,0 +1,14 @@
+#db_connections
+PORT=5050
+DB_HOST=www.sogodesk.com
+DB_PORT=5432
+DB_NAME=accounting_db
+DB_USER=postgres
+DB_PASSWORD=Postgres@123
+
+
+JWT_SECRET=accounting_secret_key_2024_change_this
+CLIENT_ORIGIN=http://localhost:5173
+NODE_ENV=development
+EXCHANGE_RATE_API_KEY=50d6839631acb8786ce9bc37
+FX_RATE_SCHEDULER=on

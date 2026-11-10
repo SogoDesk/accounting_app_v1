@@ -1,0 +1,166 @@
+/* Timesheets — Step 4 restyle. Tokens-only colour; light+dark + 5 accents. */
+
+.ts-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.ts-back {
+  width: 44px; height: 44px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); flex: 0 0 auto; cursor: pointer;
+}
+.ts-back:hover { border-color: color-mix(in srgb, var(--accent) 32%, var(--border)); color: var(--accent-text); }
+.ts-head-main { flex: 1 1 auto; min-width: 0; padding-top: 2px; }
+.ts-title { font: 800 40px/1 var(--font-ui); letter-spacing: -.03em; color: var(--ink); margin: 0; }
+.ts-sub { font: 500 13px/1.45 var(--font-ui); color: var(--muted); margin: 7px 0 0; max-width: 560px; }
+.ts-head-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+.ts-iconbtn {
+  width: 42px; height: 42px; border-radius: var(--r-btn);
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--icon); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.ts-iconbtn:hover { border-color: color-mix(in srgb, var(--accent) 32%, var(--border)); }
+.ts-btn-primary {
+  height: 46px; border-radius: var(--r-btn); background: var(--accent); color: var(--accent-contrast);
+  border: none; font: 700 14px var(--font-ui); padding: 0 18px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;
+  box-shadow: var(--shadow-btn);
+}
+.ts-btn-primary:disabled { opacity: .6; cursor: default; }
+.ts-btn-secondary {
+  height: 46px; border-radius: var(--r-btn); border: 1px solid var(--border);
+  background: var(--surface); color: var(--ink-2); font: 700 13.5px var(--font-ui);
+  padding: 0 18px; cursor: pointer;
+}
+.ts-btn-secondary:disabled { opacity: .6; cursor: default; }
+
+.ts-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+
+.ts-filters { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.ts-pill { position: relative; display: inline-flex; }
+.ts-pill > select {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; border: none; margin: 0; padding: 0;
+}
+.ts-search { flex: 1 1 auto; position: relative; display: flex; }
+.ts-search .ts-search-ic { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--icon); pointer-events: none; }
+.ts-search input {
+  width: 100%; height: 42px; border-radius: var(--r-pill); border: 1px solid var(--border);
+  background: var(--surface); padding: 0 16px 0 40px; font: 500 12.5px var(--font-ui); color: var(--ink);
+}
+.ts-search input::placeholder { color: var(--faint); }
+.ts-search input:focus { outline: none; border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); }
+
+.ts-content { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+
+.ts-panel {
+  background: var(--surface); border: 1px solid var(--border-soft);
+  border-radius: var(--r-panel); padding: 20px 20px 22px; box-shadow: var(--shadow-card);
+}
+
+/* candidate cell */
+.ts-cand { display: flex; align-items: center; gap: 10px; }
+.ts-av {
+  width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--accent-tint);
+  color: var(--accent-text); display: inline-flex; align-items: center; justify-content: center;
+  font: 700 11px var(--font-ui); flex: 0 0 auto;
+}
+.ts-cand-txt { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.ts-cand-name { font: 700 13px var(--font-ui); color: var(--ink); }
+.ts-cand-role { font: 500 11px var(--font-ui); color: var(--muted); }
+
+/* action pills */
+.ts-act {
+  height: 30px; border-radius: var(--r-pill); padding: 0 15px; cursor: pointer;
+  font: 700 11px var(--font-ui); letter-spacing: .03em; border: 1px solid transparent; text-transform: uppercase;
+}
+.ts-act:disabled { opacity: .55; cursor: default; }
+.ts-act-approve { background: var(--accent); color: var(--accent-contrast); }
+.ts-act-chase { background: var(--surface); color: var(--ink-2); border: 1px solid var(--border); }
+.ts-act-invoice { background: var(--accent-soft); color: var(--accent-text); }
+
+/* right rail */
+.ts-rail { display: flex; flex-direction: column; gap: 16px; }
+.ts-sel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ts-sel-title { font: 800 15px var(--font-ui); letter-spacing: -.01em; color: var(--ink); }
+
+.ts-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 16px 0; }
+.ts-day {
+  border-radius: 12px; padding: 9px 2px 8px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.ts-day-lbl { font: 600 10px var(--font-ui); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.ts-day-h { font: 700 13px var(--font-mono); color: var(--ink); }
+.ts-day.is-logged { background: var(--accent); }
+.ts-day.is-logged .ts-day-lbl { color: var(--accent-contrast); opacity: .78; }
+.ts-day.is-logged .ts-day-h { color: var(--accent-contrast); }
+.ts-day.is-pending { background: var(--accent-soft); }
+.ts-day.is-pending .ts-day-h, .ts-day.is-pending .ts-day-lbl { color: var(--accent-text); }
+.ts-day.is-empty { background: var(--surface-sunken); }
+.ts-day.is-empty .ts-day-h { color: var(--faint); }
+
+.ts-total {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding-top: 12px; border-top: 1px solid var(--border-hair);
+}
+.ts-total-lbl { font: 500 12px var(--font-ui); color: var(--muted); }
+.ts-total-h { font: 700 22px var(--font-mono); color: var(--ink); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ts-total-v { font: 700 15px var(--font-mono); color: var(--ink); }
+
+.ts-file {
+  display: flex; align-items: center; gap: 10px; margin-top: 14px;
+  padding: 10px 12px; border: 1px solid var(--border-hair); border-radius: 12px; background: var(--surface-sunken);
+}
+.ts-file-ic { color: var(--icon); flex: 0 0 auto; }
+.ts-file-txt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.ts-file-name { font: 600 12px var(--font-ui); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-file-sub { font: 500 11px var(--font-mono); color: var(--muted); }
+.ts-file-ext { color: var(--icon); flex: 0 0 auto; background: none; border: none; cursor: pointer; display: inline-flex; }
+
+.ts-rail-actions { display: flex; gap: 10px; margin-top: 14px; }
+.ts-rail-actions .ts-btn-primary { flex: 1 1 auto; }
+
+.ts-ri-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ts-ri-title { font: 800 15px var(--font-ui); letter-spacing: -.01em; color: var(--ink); }
+.ts-ri-link { font: 700 12px var(--font-ui); color: var(--accent-text); background: none; border: none; cursor: pointer; padding: 0; }
+.ts-ri-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0; border-top: 1px solid var(--border-hair-row);
+}
+.ts-ri-name { font: 700 13px var(--font-ui); color: var(--ink); }
+.ts-ri-sub { font: 500 11px var(--font-ui); color: var(--muted); margin-top: 2px; }
+.ts-ri-amt { font: 700 13px var(--font-mono); color: var(--ink); }
+.ts-ri-gen { width: 100%; margin-top: 14px; }
+.ts-ri-empty { font: 500 12px var(--font-ui); color: var(--muted); padding: 6px 0; }
+
+/* ---- Responsive (tablet / phone) ------------------------------------------ */
+@media (max-width: 1080px) {
+  /* Stack the two-column layout; rail drops below the main table */
+  .ts-content { grid-template-columns: 1fr; }
+  /* 4-up KPI row collapses to 2 columns */
+  .ts-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  /* Header can wrap so the action cluster drops below the title */
+  .ts-header { flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .ts-title { font-size: 28px; }
+  /* Actions drop to their own line and can wrap */
+  .ts-head-actions { width: 100%; flex-wrap: wrap; }
+  /* Filters wrap; the search field takes a full-width row */
+  .ts-filters { flex-wrap: wrap; }
+  .ts-search { flex-basis: 100%; }
+  /* Keep 2-up KPIs; short counts fit, tighter gap */
+  .ts-kpis { gap: 12px; }
+  /* Panel padding eased so content isn't squeezed */
+  .ts-panel { padding: 16px 14px 18px; }
+  /* 7-day tiles: tighten gap/padding but keep all seven visible & readable */
+  .ts-week { gap: 4px; }
+  .ts-day { padding: 8px 1px 7px; }
+}
+
+@media (max-width: 400px) {
+  /* Single-column KPIs on the smallest screens */
+  .ts-kpis { grid-template-columns: 1fr; }
+  /* Let the 7 day-tiles wrap to 4-per-row so hour figures stay legible */
+  .ts-week { grid-template-columns: repeat(4, 1fr); }
+}

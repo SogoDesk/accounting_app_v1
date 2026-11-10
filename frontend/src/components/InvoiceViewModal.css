@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Invoice view modal — laid out like an invoice document.
+   Uses the app's design tokens so it tracks light/dark automatically.
+   ========================================================================== */
+
+/* Keep the modal within the viewport: header + footer stay put, the body
+   scrolls internally instead of the whole card spilling past top/bottom. */
+.iv-modal .modal-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 184px);
+}
+
+.iv-state { padding: 32px; text-align: center; color: var(--muted); font-family: var(--font-ui); }
+
+.iv-doc {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ---- Masthead ----------------------------------------------------------- */
+.iv-mast {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.iv-mast-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--accent-text);
+}
+.iv-mast-number {
+  font-size: 26px; font-weight: 800; line-height: 1.15; color: var(--ink);
+  font-family: var(--font-mono);
+}
+.iv-mast-issuer { margin-top: 4px; font-size: 13px; color: var(--muted); font-weight: 500; }
+.iv-mast-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.iv-mast-due { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.iv-mast-due-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted);
+}
+.iv-mast-due-val {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 800; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.iv-mast-due-val.is-open { color: var(--danger); }
+
+/* ---- Parties + meta ----------------------------------------------------- */
+.iv-parties { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; }
+.iv-party-label,
+.iv-meta-row span:first-child {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted);
+}
+.iv-party-body { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.iv-avatar {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent-text);
+  font-weight: 700; font-size: 14px;
+}
+.iv-party-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.iv-party-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+.iv-meta { display: flex; flex-direction: column; gap: 8px; }
+.iv-meta-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.iv-meta-row strong { font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* ---- Line items --------------------------------------------------------- */
+.iv-items {
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface);
+}
+.iv-items-head,
+.iv-item {
+  display: grid;
+  grid-template-columns: 1fr 64px 108px 120px;
+  gap: 12px; align-items: center;
+  padding: 12px 16px;
+}
+.iv-items-head {
+  background: var(--surface-sunken);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.iv-item { border-bottom: 1px solid var(--border-hair-row, var(--border)); }
+.iv-item:last-child { border-bottom: none; }
+.iv-col-qty, .iv-col-rate, .iv-col-amt { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+.iv-items-head .iv-col-qty, .iv-items-head .iv-col-rate, .iv-items-head .iv-col-amt { font-family: var(--font-ui); }
+.iv-col-amt { font-weight: 700; color: var(--ink); }
+.iv-item-main { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.iv-item-sub { font-size: 12px; color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
+.iv-items-empty { padding: 20px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ---- Totals ------------------------------------------------------------- */
+.iv-summary { display: flex; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+.iv-taxlines { flex: 1 1 200px; min-width: 200px; }
+.iv-taxlines-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.iv-taxline { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--ink); padding: 3px 0; }
+
+.iv-totals { flex: 0 0 300px; margin-left: auto; display: flex; flex-direction: column; gap: 6px; }
+.iv-total-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--muted); }
+.iv-total-row span:first-child { font-weight: 500; }
+.iv-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.iv-paid { color: var(--success); }
+.iv-total-grand {
+  margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 15px; color: var(--ink);
+}
+.iv-total-grand span:first-child { font-weight: 700; }
+.iv-total-grand .iv-mono { font-size: 16px; font-weight: 800; }
+.iv-total-balance {
+  margin-top: 6px; padding: 10px 12px; border-radius: 10px;
+  background: var(--surface-sunken); color: var(--ink);
+}
+.iv-total-balance span:first-child { font-weight: 700; }
+.iv-total-balance .iv-mono { font-weight: 800; }
+.iv-total-balance.is-open { background: var(--danger-soft); }
+.iv-total-balance.is-open .iv-mono { color: var(--danger); }
+
+/* ---- Applied-to card (payment receipts) --------------------------------- */
+.iv-section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+.iv-applied {
+  border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; background: var(--surface);
+}
+.iv-applied-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.iv-applied-no { font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--ink); }
+.iv-applied-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; }
+.iv-applied-cell { display: flex; flex-direction: column; gap: 3px; }
+.iv-applied-cell span { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--muted); }
+.iv-applied-cell strong { font-family: var(--font-mono); font-size: 13.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---- Journal-entry lines (3-column: account / debit / credit) ----------- */
+.je-lines-row { grid-template-columns: 1fr 140px 140px !important; }
+.je-lines-total { background: var(--surface-sunken); }
+.je-lines-total > div:first-child { font-weight: 700; color: var(--ink); font-size: 13px; }
+.je-lines-total .iv-col-amt { color: var(--ink); font-weight: 800; }
+
+/* ---- Notes -------------------------------------------------------------- */
+.iv-notes { display: flex; flex-direction: column; gap: 14px; }
+.iv-note { font-size: 13px; color: var(--ink); line-height: 1.5; }
+.iv-note-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+
+.iv-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.iv-actions .iv-btn-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 32%, var(--border)); }
+.iv-actions .iv-btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 640px) {
+  .iv-parties { grid-template-columns: 1fr; gap: 18px; }
+  .iv-items-head, .iv-item { grid-template-columns: 1fr 48px 84px 92px; gap: 8px; padding: 10px 12px; }
+  .iv-totals { flex-basis: 100%; }
+  .iv-mast-number { font-size: 22px; }
+}

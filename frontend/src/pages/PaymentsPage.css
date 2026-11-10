@@ -1,0 +1,321 @@
+/* Payments — Step 4 restyle (scoped, tokens only, light + dark + all accents) */
+
+.pay-page {
+  font-family: var(--font-ui);
+  color: var(--ink-2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Header ---------------------------------------------------------- */
+.pay-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.pay-back {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease;
+}
+.pay-back:hover { background: var(--surface-sunken); }
+.pay-head-copy { flex: 1 1 auto; min-width: 0; padding-top: 1px; }
+.pay-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--ink);
+}
+.pay-subtitle {
+  margin: 7px 0 0;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pay-head-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.pay-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.pay-icon-btn.sm { width: 32px; height: 32px; border-radius: 10px; }
+.pay-icon-btn:hover { background: var(--surface-sunken); }
+.pay-icon-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pay-btn {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: var(--r-btn);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.pay-btn:disabled { opacity: .55; cursor: not-allowed; }
+.pay-btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-2);
+}
+.pay-btn-secondary:hover:not(:disabled) { background: var(--surface-sunken); }
+.pay-btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 14px;
+  box-shadow: var(--shadow-accent);
+}
+.pay-btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-btn); }
+
+/* ---- KPI row -------------------------------------------------------- */
+.pay-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.pay-sub-warn { color: var(--warn-text); font-weight: 600; }
+
+/* ---- Filter row ----------------------------------------------------- */
+.pay-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pay-pill-wrap { position: relative; }
+
+.pay-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 220px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-dropdown);
+  box-shadow: var(--shadow-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pay-pop-item {
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.pay-pop-item:hover { background: var(--surface-sunken); }
+.pay-pop-item.is-on { background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+
+.pay-pop-dates { min-width: 240px; gap: 10px; padding: 12px; }
+.pay-pop-field { display: flex; flex-direction: column; gap: 4px; }
+.pay-pop-field span { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.pay-pop-field input {
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.pay-pop-clear {
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pay-search-pill {
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--icon);
+  min-width: 220px;
+}
+.pay-search-pill input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink);
+  width: 100%;
+}
+.pay-search-pill input::placeholder { color: var(--faint); }
+
+.pay-reset {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.pay-reset:hover { color: var(--ink-2); }
+
+/* ---- Content grid --------------------------------------------------- */
+.pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 336px;
+  gap: 16px;
+  align-items: start;
+}
+.pay-list { display: flex; flex-direction: column; gap: 14px; }
+
+/* Table cells */
+.pay-client { display: flex; align-items: center; gap: 10px; }
+.pay-avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.pay-client-copy { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.pay-client-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+.pay-client-name a { color: var(--ink); text-decoration: none; }
+.pay-client-name a:hover { color: var(--accent-text); }
+.pay-client-sub { font-weight: 500; font-size: 11px; color: var(--muted); }
+.pay-unapplied-tag { color: var(--warn-text); font-weight: 700; }
+.pay-foot-label { color: var(--muted); font-weight: 600; font-size: 12px; }
+
+/* ---- Right rail ----------------------------------------------------- */
+.pay-rail { display: flex; flex-direction: column; gap: 16px; }
+.pay-rail-card { display: flex; flex-direction: column; gap: 14px; }
+.pay-rail-title { font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--ink); }
+
+.pay-rail-list { display: flex; flex-direction: column; }
+.pay-rail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-hair);
+}
+.pay-rail-row:last-child { border-bottom: none; }
+.pay-rail-copy { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.pay-rail-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+.pay-rail-sub { font-weight: 500; font-size: 11px; color: var(--muted); }
+.pay-rail-amt { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.pay-rail-empty { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.pay-rail-btn { width: 100%; justify-content: center; }
+
+/* By method legend + bar */
+.pay-legend { display: flex; flex-direction: column; gap: 9px; }
+.pay-legend-row { display: flex; align-items: center; gap: 9px; }
+.pay-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.pay-legend-label { font-size: 12.5px; font-weight: 500; color: var(--ink-2); flex: 1 1 auto; }
+.pay-legend-amt { font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; color: var(--ink); }
+.pay-bar {
+  display: flex;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.pay-bar-seg { height: 100%; }
+.pay-bar-seg:not(:last-child) { box-shadow: 1px 0 0 var(--surface); }
+
+/* ---- Responsive ----------------------------------------------------- */
+/* Tablet / small laptop: collapse the two-column layout to one so the right
+   rail (unapplied credit + by-method bar) stacks BELOW the main table, and the
+   KPI row drops to two-up. */
+@media (max-width: 1080px) {
+  .pay-grid { grid-template-columns: 1fr; }
+  .pay-kpis { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .pay-header { flex-wrap: wrap; }
+  .pay-head-actions { margin-left: auto; }
+}
+
+/* Phone: single-column KPIs, header actions take a full row, search field goes
+   full width in the wrapped filter row. */
+@media (max-width: 640px) {
+  .pay-page { gap: 14px; }
+  .pay-kpis { grid-template-columns: 1fr; }
+  .pay-title { font-size: 28px; }
+  .pay-head-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  .pay-search-pill {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+  .pay-reset { margin-left: 0; }
+}
+
+/* Clickable receipt/payment code → opens the view modal. */
+.pay-number-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--accent-text);
+  text-align: left;
+  border-radius: 4px;
+}
+.pay-number-btn:hover { text-decoration: underline; }
+.pay-number-btn:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }

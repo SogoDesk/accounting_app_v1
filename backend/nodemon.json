@@ -1,0 +1,5 @@
+{
+  "watch": ["server.js", "config", "controllers", "middleware", "routes", "utils"],
+  "ext": "js,json",
+  "ignore": ["node_modules/**", "uploads/**"]
+}
