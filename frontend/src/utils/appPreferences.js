@@ -1,5 +1,12 @@
 const STORAGE_KEY = 'app_preferences'
 
+//added function//
+
+export const clearAppPreferences = () => {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(STORAGE_KEY)
+}
+
 export const APP_PREF_DEFAULTS = {
   date_format: 'MM/DD/YYYY',
   currency_format: 'SYMBOL',
@@ -8,13 +15,11 @@ export const APP_PREF_DEFAULTS = {
   first_month_tax_year: 4,
   warn_duplicate_invoice_number: true,
 }
-
 const normalizeMonth = (value, fallback) => {
   const num = Number(value)
   if (Number.isInteger(num) && num >= 1 && num <= 12) return num
   return fallback
 }
-
 const normalizePrefs = (raw = {}) => ({
   date_format: ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'].includes(String(raw.date_format || '').toUpperCase())
     ? String(raw.date_format).toUpperCase()
@@ -30,7 +35,6 @@ const normalizePrefs = (raw = {}) => ({
       ? APP_PREF_DEFAULTS.warn_duplicate_invoice_number
       : raw.warn_duplicate_invoice_number === true || raw.warn_duplicate_invoice_number === 'true' || raw.warn_duplicate_invoice_number === 1 || raw.warn_duplicate_invoice_number === '1',
 })
-
 export const getAppPreferences = () => {
   if (typeof window === 'undefined') return APP_PREF_DEFAULTS
   try {
@@ -40,14 +44,12 @@ export const getAppPreferences = () => {
     return APP_PREF_DEFAULTS
   }
 }
-
 export const setAppPreferences = (next = {}) => {
   if (typeof window === 'undefined') return APP_PREF_DEFAULTS
   const merged = normalizePrefs({ ...getAppPreferences(), ...next })
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
   return merged
 }
-
 export const setAppPreferencesFromRegion = (region) => {
   if (!region) return getAppPreferences()
   return setAppPreferences({

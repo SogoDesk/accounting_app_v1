@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
 const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { recalculateBillBalances } = require("./billController");
@@ -6,6 +7,12 @@ const glPosting = require("../services/gl/postingService");
 const { generateVendorPaymentCode, generateVendorPaymentReference } = require("../utils/codeGenerator");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
 const { groupCurrency, attachReportingFields } = require("../utils/reportingCurrency");
+
+const tenantDb = () => {
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database context missing");
+  return db;
+};
 
 const toMoney = (value) => {
   const amount = Number(value || 0);
@@ -19,7 +26,7 @@ const toNullable = (value) => {
 
 const sanitizeDate = (value) => {
   if (!value) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value))) return String(value);
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed.toISOString().slice(0, 10);
@@ -53,7 +60,8 @@ const fetchBillOptions = async (db) => db.query(
 
 const getAllVendorPayments = async (req, res) => {
   try {
-    await ensureApSchema();
+    const db = tenantDb();
+    await ensureApSchema(db);
     const { search = "", bill_id = "", vendor_id = "", payment_method = "" } = req.query;
     const conditions = [];
     const values = [];
@@ -84,7 +92,7 @@ const getAllVendorPayments = async (req, res) => {
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const result = await pool.query(
+    const result = await db.query(
       `
       SELECT
         vp.*,
@@ -108,12 +116,11 @@ const getAllVendorPayments = async (req, res) => {
       values,
     );
 
-    // Consolidate to the company group currency for cross-region KPI sums.
-    const reportingCcy = await groupCurrency(pool);
+    const reportingCcy = await groupCurrency(db);
     await attachReportingFields(
       result.rows,
       { amount_paid: "amount_paid_reporting" },
-      { db: pool, reportingCcy },
+      { db, reportingCcy },
     );
 
     return res.json({ success: true, data: result.rows, reporting_currency: reportingCcy });
@@ -124,8 +131,9 @@ const getAllVendorPayments = async (req, res) => {
 
 const getVendorPaymentById = async (req, res) => {
   try {
-    await ensureApSchema();
-    const result = await pool.query(
+    const db = tenantDb();
+    await ensureApSchema(db);
+    const result = await db.query(
       `
       SELECT
         vp.*,
@@ -159,8 +167,9 @@ const getVendorPaymentById = async (req, res) => {
 
 const getVendorPaymentBillOptions = async (req, res) => {
   try {
-    await ensureApSchema();
-    const result = await fetchBillOptions(pool);
+    const db = tenantDb();
+    await ensureApSchema(db);
+    const result = await fetchBillOptions(db);
     return res.json({ success: true, data: result.rows });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to load bill options", error: error.message });
@@ -170,10 +179,11 @@ const getVendorPaymentBillOptions = async (req, res) => {
 // GET /vendor-payments/next-code — pre-fill the modal like AR's /payments/next-code.
 const getNextVendorPaymentCode = async (req, res) => {
   try {
-    await ensureApSchema();
+    const db = tenantDb();
+    await ensureApSchema(db);
     const [payment_code, reference_number] = await Promise.all([
-      generateVendorPaymentCode(pool),
-      generateVendorPaymentReference(pool),
+      generateVendorPaymentCode(db),
+      generateVendorPaymentReference(db),
     ]);
     return res.json({ success: true, data: { payment_code, reference_number } });
   } catch (error) {
@@ -182,7 +192,8 @@ const getNextVendorPaymentCode = async (req, res) => {
 };
 
 const createVendorPayment = async (req, res) => {
-  const db = await pool.connect();
+  const db = tenantDb();
+  let transactionStarted = false;
   try {
     await ensureApSchema(db);
     const {
@@ -209,6 +220,7 @@ const createVendorPayment = async (req, res) => {
     }
 
     await db.query("BEGIN");
+    transactionStarted = true;
 
     // Lock all target bills for the txn so concurrent payments can't over-pay.
     await db.query(`SELECT id FROM bills WHERE id = ANY($1) FOR UPDATE`, [targetBillIds]);
@@ -218,24 +230,27 @@ const createVendorPayment = async (req, res) => {
       const r = await db.query(`SELECT * FROM bills WHERE id = $1 AND deleted_at IS NULL LIMIT 1`, [id]);
       if (!r.rows.length) {
         await db.query("ROLLBACK");
+        transactionStarted = false;
         return res.status(404).json({ success: false, message: `Bill ${id} not found` });
       }
       const bill = r.rows[0];
       if (!canActOnEntity(req, bill.region_id)) {
         await db.query("ROLLBACK");
+        transactionStarted = false;
         return res.status(403).json({ success: false, message: "Not authorized for this entity (region)" });
       }
       if (String(bill.approval_status || "").toUpperCase() !== "APPROVED") {
         await db.query("ROLLBACK");
+        transactionStarted = false;
         return res.status(400).json({ success: false, message: `Bill ${bill.bill_number} is not approved` });
       }
       bills.push(bill);
     }
 
-    // All bills in one payment must share a currency.
     const currencies = Array.from(new Set(bills.map((b) => String(b.currency || "USD").toUpperCase())));
     if (currencies.length > 1) {
       await db.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ success: false, message: "Selected bills must use the same currency for one payment" });
     }
 
@@ -245,10 +260,12 @@ const createVendorPayment = async (req, res) => {
 
     if (remaining <= 0) {
       await db.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ success: false, message: "Amount paid must be greater than zero" });
     }
     if (remaining > suggestedTotal + 0.005) {
       await db.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ success: false, message: `Amount cannot exceed total outstanding of ${suggestedTotal.toFixed(2)}` });
     }
 
@@ -265,7 +282,6 @@ const createVendorPayment = async (req, res) => {
       remaining = Number((remaining - cashAmount).toFixed(2));
       if (cashAmount <= 0) continue;
 
-      // First row may take the user-supplied code; the rest auto-generate.
       let codeForRow = (i === 0 && userCode) ? userCode : await generateVendorPaymentCode(db);
       const dup = await db.query(`SELECT id FROM vendor_payments WHERE payment_code = $1 LIMIT 1`, [codeForRow]);
       if (dup.rows.length) codeForRow = await generateVendorPaymentCode(db);
@@ -290,7 +306,6 @@ const createVendorPayment = async (req, res) => {
       const vpRow = inserted.rows[0];
       createdPayments.push(vpRow);
 
-      // Post the disbursement → Dr Accounts Payable, Cr Bank (with realized FX).
       if (await glPosting.glAvailable(db)) {
         await glPosting.postVendorPayment(db, {
           id: vpRow.id,
@@ -308,10 +323,12 @@ const createVendorPayment = async (req, res) => {
 
     if (!createdPayments.length) {
       await db.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ success: false, message: "No payable balance found on the selected bills" });
     }
 
     await db.query("COMMIT");
+    transactionStarted = false;
 
     for (const payment of createdPayments) {
       await auditLog({
@@ -331,15 +348,16 @@ const createVendorPayment = async (req, res) => {
       data: { payment: createdPayments[0], payments: createdPayments, bills: updatedBills, bill: updatedBills[0] },
     });
   } catch (error) {
-    try { await db.query("ROLLBACK"); } catch (_error) {}
+    if (transactionStarted) {
+      try { await db.query("ROLLBACK"); } catch (_error) {}
+    }
     return res.status(500).json({ success: false, message: "Failed to create vendor payment", error: error.message });
-  } finally {
-    db.release();
   }
 };
 
 const updateVendorPayment = async (req, res) => {
-  const db = await pool.connect();
+  const db = tenantDb();
+  let transactionStarted = false;
   try {
     await ensureApSchema(db);
     const { id } = req.params;
@@ -370,6 +388,7 @@ const updateVendorPayment = async (req, res) => {
     }
 
     await db.query("BEGIN");
+    transactionStarted = true;
     const result = await db.query(
       `
       UPDATE vendor_payments
@@ -401,7 +420,6 @@ const updateVendorPayment = async (req, res) => {
     }
     const updatedBill = await recalculateBillBalances(db, targetBillId);
 
-    // Re-sync the GL: reverse the prior disbursement entry, re-post at new amounts.
     if (await glPosting.glAvailable(db)) {
       const posted = await glPosting.postedEntryIds("AP_PAYMENT", Number(id), db);
       for (const e of posted) await glPosting.reverseEntry(db, e.id, "Vendor payment edited", req.user?.id || null);
@@ -413,6 +431,7 @@ const updateVendorPayment = async (req, res) => {
     }
 
     await db.query("COMMIT");
+    transactionStarted = false;
 
     await auditLog({
       userId: req.user?.id,
@@ -427,15 +446,16 @@ const updateVendorPayment = async (req, res) => {
 
     return res.json({ success: true, message: "Vendor payment updated", data: { payment: result.rows[0], bill: updatedBill } });
   } catch (error) {
-    try { await db.query("ROLLBACK"); } catch (_error) {}
+    if (transactionStarted) {
+      try { await db.query("ROLLBACK"); } catch (_error) {}
+    }
     return res.status(500).json({ success: false, message: "Failed to update vendor payment", error: error.message });
-  } finally {
-    db.release();
   }
 };
 
 const deleteVendorPayment = async (req, res) => {
-  const db = await pool.connect();
+  const db = tenantDb();
+  let transactionStarted = false;
   try {
     await ensureApSchema(db);
     const { id } = req.params;
@@ -449,7 +469,7 @@ const deleteVendorPayment = async (req, res) => {
     const existing = existingResult.rows[0];
 
     await db.query("BEGIN");
-    // Reverse the disbursement's ledger entry so the GL stays balanced on delete.
+    transactionStarted = true;
     if (await glPosting.glAvailable(db)) {
       const posted = await glPosting.postedEntryIds("AP_PAYMENT", Number(id), db);
       for (const e of posted) await glPosting.reverseEntry(db, e.id, "Vendor payment deleted", req.user?.id || null);
@@ -457,6 +477,7 @@ const deleteVendorPayment = async (req, res) => {
     await db.query(`DELETE FROM vendor_payments WHERE id = $1`, [Number(id)]);
     const updatedBill = await recalculateBillBalances(db, Number(existing.bill_id));
     await db.query("COMMIT");
+    transactionStarted = false;
 
     await auditLog({
       userId: req.user?.id,
@@ -470,17 +491,18 @@ const deleteVendorPayment = async (req, res) => {
 
     return res.json({ success: true, message: "Vendor payment deleted", data: { bill: updatedBill } });
   } catch (error) {
-    try { await db.query("ROLLBACK"); } catch (_error) {}
+    if (transactionStarted) {
+      try { await db.query("ROLLBACK"); } catch (_error) {}
+    }
     return res.status(500).json({ success: false, message: "Failed to delete vendor payment", error: error.message });
-  } finally {
-    db.release();
   }
 };
 
 const downloadVendorPaymentReceipt = async (req, res) => {
   try {
-    await ensureApSchema();
-    const result = await pool.query(
+    const db = tenantDb();
+    await ensureApSchema(db);
+    const result = await db.query(
       `SELECT vp.*, b.bill_number, b.bill_status, b.total_amount AS bill_total_amount,
               b.balance_outstanding AS bill_balance_outstanding, b.currency, b.region_id,
               v.vendor_name, r.region_name

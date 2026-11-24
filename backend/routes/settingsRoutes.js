@@ -1,16 +1,21 @@
+
 const express = require("express");
 const router = express.Router();
 
 const settingsController = require("../controllers/settingsController");
 const { authenticate } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const FINANCE = ["SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"];
-// Settings config routes are gated by the 'settings' permission (falling back to
-// the finance roles when a role has no permission set defined).
+
+// Settings permission guard
 const settingsGuard = permit("settings", ...FINANCE);
 
-// Every authenticated user can read their own effective permissions (drives the menu).
+// Tenant isolation for all authenticated settings routes
+router.use(authenticate, tenantMiddleware);
+
+// Every authenticated user can read their own effective permissions
 router.get("/my-permissions", authenticate, settingsController.getMyPermissions);
 router.get("/permission-catalog", authenticate, settingsController.getPermissionCatalog);
 
@@ -30,7 +35,7 @@ router.put("/reminders", authenticate, settingsGuard, settingsController.updateR
 router.get("/numbering", authenticate, settingsGuard, settingsController.listNumbering);
 router.put("/numbering/:doc_type", authenticate, settingsGuard, settingsController.updateNumbering);
 
-// Fiscal year overview (read-only)
+// Fiscal year overview
 router.get("/fiscal", authenticate, settingsGuard, settingsController.getFiscalOverview);
 
 // Tax rates

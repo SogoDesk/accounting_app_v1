@@ -1,4 +1,6 @@
+
 import axios from 'axios'
+import { getTenantSlug } from '../utils/tenant'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
@@ -10,6 +12,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  const tenant = getTenantSlug()
+  if (tenant) config.headers['X-Tenant'] = tenant
+
   return config
 })
 
@@ -17,19 +23,28 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const isLoginRequest = err.config?.url?.includes('/auth/login')
+
     if (err.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       window.location.href = '/'
     }
+
     return Promise.reject(err)
   }
 )
 
 export const downloadFile = async (url, filename) => {
   const token = localStorage.getItem('token')
-  const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const tenant = getTenantSlug()
+  const headers = {}
+
+  if (token) headers.Authorization = `Bearer ${token}`
+  if (tenant) headers['X-Tenant'] = tenant
+
+  const res = await fetch(url, { headers })
   if (!res.ok) throw new Error('Download failed')
+
   const blob = await res.blob()
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)

@@ -1,14 +1,16 @@
+
 const express = require("express");
 const c = require("../controllers/expenseController");
 const { authenticate } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const router = express.Router();
 const finance = permit("expenses", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN");
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every expense route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/categories", authenticate, finance, c.listCategories);
 router.post("/categories", authenticate, finance, c.createCategory);

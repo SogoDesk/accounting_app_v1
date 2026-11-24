@@ -1,18 +1,20 @@
-const bcrypt = require("bcrypt");
 
-const plainPassword = process.argv[2];
+const bcrypt = require("bcryptjs");
+const readline = require("readline");
 
-if (!plainPassword) {
-  console.error("Usage: node scripts/hashPassword.js <plain_password>");
-  process.exit(1);
-}
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-(async () => {
+rl.question("Enter your new password: ", async (password) => {
   try {
-    const hash = await bcrypt.hash(plainPassword, 10);
+    const hash = await bcrypt.hash(password, 10);
+    console.log("\nGenerated password hash:\n");
     console.log(hash);
   } catch (error) {
-    console.error("Failed to generate password hash:", error.message);
-    process.exit(1);
+    console.error("Failed:", error.message);
+  } finally {
+    rl.close();
   }
-})();
+});

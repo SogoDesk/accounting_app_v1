@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,13 +6,16 @@ const regionController = require("../controllers/regionController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 const uploadRegionLogo = require("../middleware/uploadRegionLogo");
 
-// Row-level RBAC: a region is the legal entity; attach the caller's allowed set.
-router.use(authenticate, scopeAccess);
+// Row-level RBAC and tenant isolation
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
+// Get all regions
 router.get("/", authenticate, regionController.getAllRegions);
 
+// Create region
 router.post(
   "/",
   authenticate,
@@ -20,6 +24,7 @@ router.post(
   regionController.createRegion,
 );
 
+// Update region
 router.put(
   "/:id",
   authenticate,
@@ -28,6 +33,7 @@ router.put(
   regionController.updateRegion,
 );
 
+// Delete region
 router.delete(
   "/:id",
   authenticate,

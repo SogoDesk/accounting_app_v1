@@ -1,3 +1,4 @@
+
 const express = require("express");
 
 const authRoutes = require("./authRoutes");
@@ -10,6 +11,7 @@ const auditRoutes = require("./auditRoutes");
 const notificationRoutes = require("./notificationRoutes");
 const reportRoutes = require("./reportRoutes");
 const placementRoutes = require("./placementRoutes");
+const platformRoutes = require("./platformRoutes");
 const invoiceRoutes = require("./invoiceRoutes");
 const paymentRoutes = require("./paymentRoutes");
 const healthRoutes = require("./healthRoutes");
@@ -26,9 +28,18 @@ const timesheetRoutes = require("./timesheetRoutes");
 const settingsRoutes = require("./settingsRoutes");
 const emailTemplateRoutes = require("./emailTemplateRoutes");
 
+
 const router = express.Router();
 
+// Login routes remain accessible without tenant context
 router.use("/auth", authRoutes);
+
+// Platform Admin routes
+// These must run before tenantMiddleware
+router.use("/platform", platformRoutes);
+
+// Protected routes — each route file runs authenticate, then tenantMiddleware
+// (tenantMiddleware needs req.user, so it must not run here before authenticate).
 router.use("/regions", regionRoutes);
 router.use("/clients", clientRoutes);
 router.use("/candidates", candidateRoutes);

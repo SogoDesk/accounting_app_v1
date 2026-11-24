@@ -1,142 +1,306 @@
+
+
 // =============================================================================
-// intercompanyService — paired inter-branch / inter-company transfers
-//                       (Blueprint Step 4 / audit §3.2)
+// closeScheduler.js - monthly period-close automation
 //
-// A transfer from location A to location B posts TWO balanced journal entries
-// inside one transaction, sharing a transfer_no:
-//   from-side:  Dr 1600 Intercompany Receivable (Due From) / Cr 1000 Bank
-//   to-side:    Dr 1000 Bank / Cr 2600 Intercompany Payable (Due To)
-// Each side is tagged with its own location_id and its owning entity, and the
-// pair is recorded in intercompany_transfers linking both entry ids. On
-// consolidation, 1600/2600 net to ~0 and are eliminated (see glReports).
+// Manual close:
+// Uses the tenant connection created by tenantMiddleware.
+//
+// Automatic close:
+// Reads all tenant IDs and runs the close separately for each tenant.
 // =============================================================================
 
 const pool = require("../../config/db");
-const ledger = require("./ledgerEngine");
-const currency = require("../currency/currencyService");
 
-// node-postgres returns DATE as a JS Date; normalize to a YYYY-MM-DD key.
-const dateKey = (v) => {
-  if (v instanceof Date) {
-    return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}`;
-  }
-  return String(v).slice(0, 10);
-};
+const {
+  getTenantClient,
+  runWithTenant,
+} = require("../../config/tenantContext");
 
-// The owning legal entity's region id for an org-unit location.
-async function entityRegionForLocation(db, locationId) {
-  const { rows } = await db.query(
-    `SELECT e.region_id FROM org_units e WHERE e.id = owning_entity_id($1)`,
-    [locationId],
-  );
-  if (!rows.length || rows[0].region_id == null)
-    throw new Error(`No owning legal entity (region) for location ${locationId}`);
-  return rows[0].region_id;
+const fxRevaluationService = require("./fxRevaluationService");
+const recognitionService = require("./recognitionService");
+
+// Last day of the month immediately before isoDate.
+function priorMonthEnd(isoDate) {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(1);
+  d.setUTCDate(0);
+  return d.toISOString().slice(0, 10);
 }
 
-async function nextTransferNo(db) {
-  await db.query("CREATE SEQUENCE IF NOT EXISTS intercompany_transfer_seq");
-  const { rows } = await db.query("SELECT nextval('intercompany_transfer_seq') AS n");
-  const year = new Date().getFullYear();
-  return `ICT-${year}-${String(rows[0].n).padStart(6, "0")}`;
+// Get the current tenant's database connection.
+function getDbClient() {
+  const client = getTenantClient();
+
+  if (!client) {
+    throw new Error("Tenant database connection not found.");
+  }
+
+  return client;
 }
 
 /**
- * Post a balanced intercompany transfer between two locations.
- * @param params { fromLocationId, toLocationId, amount, currency, date, memo, userId }
- * @returns { transferNo, fromEntryId, toEntryId, id }
+ * Run the close for the current tenant.
+ * Used by the manual API endpoint and scheduled tenant runner.
  */
-async function postTransfer(params) {
-  const { fromLocationId, toLocationId, amount, currency: ccy, date, memo, userId } = params;
-  if (!fromLocationId || !toLocationId)
-    throw new Error("fromLocationId and toLocationId are required");
-  if (Number(fromLocationId) === Number(toLocationId))
-    throw new Error("from and to locations must differ");
-  const amt = Number(amount);
-  if (!Number.isFinite(amt) || amt <= 0) throw new Error("amount must be > 0");
-  if (!ccy) throw new Error("currency is required");
-  const d = dateKey(date || new Date());
-
-  const db = await pool.connect();
-  try {
-    await db.query("BEGIN");
-
-    const fromEntity = await entityRegionForLocation(db, fromLocationId);
-    const toEntity = await entityRegionForLocation(db, toLocationId);
-
-    // Translate the transfer amount into each entity's functional currency.
-    const fromFx = await currency.toFunctional(amt, ccy, fromEntity, d, db);
-    const toFx = await currency.toFunctional(amt, ccy, toEntity, d, db);
-
-    const transferNo = await nextTransferNo(db);
-
-    // from-side: Dr Due From (1600) / Cr Bank (1000)
-    const fromEntry = await ledger.postEntry(
-      db,
-      {
-        entityId: fromEntity, locationId: Number(fromLocationId), entryDate: d,
-        source: "INTERCOMPANY", sourceRef: transferNo,
-        description: `Intercompany transfer ${transferNo} (out)${memo ? ": " + memo : ""}`,
-        userId,
-      },
-      [
-        { accountCode: "1600", debit: amt, debitBase: fromFx.amountBase, currency: ccy, exchangeRate: fromFx.exchangeRate, memo: "Due from related entity" },
-        { accountCode: "1000", credit: amt, creditBase: fromFx.amountBase, currency: ccy, exchangeRate: fromFx.exchangeRate, memo: "Bank — transfer out" },
-      ],
-    );
-
-    // to-side: Dr Bank (1000) / Cr Due To (2600)
-    const toEntry = await ledger.postEntry(
-      db,
-      {
-        entityId: toEntity, locationId: Number(toLocationId), entryDate: d,
-        source: "INTERCOMPANY", sourceRef: transferNo,
-        description: `Intercompany transfer ${transferNo} (in)${memo ? ": " + memo : ""}`,
-        userId,
-      },
-      [
-        { accountCode: "1000", debit: amt, debitBase: toFx.amountBase, currency: ccy, exchangeRate: toFx.exchangeRate, memo: "Bank — transfer in" },
-        { accountCode: "2600", credit: amt, creditBase: toFx.amountBase, currency: ccy, exchangeRate: toFx.exchangeRate, memo: "Due to related entity" },
-      ],
-    );
-
-    const { rows } = await db.query(
-      `INSERT INTO intercompany_transfers
-         (transfer_no, from_location, to_location, amount, currency, transfer_date, memo,
-          from_entry_id, to_entry_id, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-      [transferNo, Number(fromLocationId), Number(toLocationId), amt, ccy, d, memo || null,
-       fromEntry.id, toEntry.id, userId || null],
-    );
-
-    await db.query("COMMIT");
-    return { id: rows[0].id, transferNo, fromEntryId: fromEntry.id, toEntryId: toEntry.id };
-  } catch (e) {
-    try { await db.query("ROLLBACK"); } catch (_) {}
-    throw e;
-  } finally {
-    db.release();
+async function runMonthlyClose({ asOfDate, userId } = {}) {
+  if (!asOfDate) {
+    throw new Error("asOfDate is required");
   }
-}
 
-/** List transfers, optionally restricted to a set of allowed location ids. */
-async function listTransfers({ allowedLocationIds } = {}, db = pool) {
-  const params = [];
-  let where = "";
-  if (Array.isArray(allowedLocationIds)) {
-    params.push(allowedLocationIds);
-    where = `WHERE t.from_location = ANY($1) OR t.to_location = ANY($1)`;
-  }
-  const { rows } = await db.query(
-    `SELECT t.*, fo.name AS from_location_name, tou.name AS to_location_name
-       FROM intercompany_transfers t
-       LEFT JOIN org_units fo  ON fo.id = t.from_location
-       LEFT JOIN org_units tou ON tou.id = t.to_location
-       ${where}
-      ORDER BY t.id DESC`,
-    params,
+  // Get the current tenant's database connection.
+  const db = getDbClient();
+
+  // Read legal entities only from the current tenant.
+  const { rows: entities } = await db.query(
+    `SELECT DISTINCT region_id
+       FROM org_units
+      WHERE is_legal_entity = true
+        AND region_id IS NOT NULL
+      ORDER BY region_id`
   );
-  return rows;
+
+  const results = [];
+
+  for (const entity of entities) {
+    const entityId = entity.region_id;
+    const result = { entityId };
+
+    try {
+      result.fx = await fxRevaluationService.revalue({
+        entityId,
+        asOfDate,
+        userId,
+      });
+    } catch (error) {
+      result.fxError = error.message;
+    }
+
+    results.push(result);
+  }
+
+  // Run recognition schedules for this tenant.
+  let recognition;
+
+  try {
+    recognition = await recognitionService.runDue({
+      asOfDate,
+      userId,
+    });
+  } catch (error) {
+    recognition = {
+      error: error.message,
+    };
+  }
+
+  // Close this tenant's accounting period.
+  let period = null;
+
+  try {
+    period = await closePeriodFor(asOfDate);
+  } catch (error) {
+    period = {
+      error: error.message,
+    };
+  }
+
+  return {
+    asOfDate,
+    entities: results,
+    recognition,
+    period,
+  };
 }
 
-module.exports = { postTransfer, listTransfers };
+// Run the monthly close separately for every tenant.
+async function runMonthlyCloseForAllTenants({
+  asOfDate,
+  userId,
+} = {}) {
+  if (!asOfDate) {
+    throw new Error("asOfDate is required");
+  }
+
+  // The tenants table is global.
+  // This query runs outside a tenant context.
+  const { rows: tenants } = await pool.query(
+    "SELECT id FROM tenants ORDER BY id"
+  );
+
+  const results = [];
+
+  for (const tenant of tenants) {
+    const tenantId = Number(tenant.id);
+    let client;
+
+    try {
+      if (!Number.isInteger(tenantId) || tenantId <= 0) {
+        throw new Error("Invalid tenant ID.");
+      }
+
+      // Get a dedicated database connection for this tenant.
+      client = await pool.connect();
+
+      // Set tenant context on this database connection.
+      await client.query(
+        "SELECT set_config('app.tenant_id', $1, false)",
+        [String(tenantId)]
+      );
+
+      // Run all operations inside this tenant's context.
+      const result = await runWithTenant(
+        client,
+        tenantId,
+        () => runMonthlyClose({
+          asOfDate,
+          userId,
+        })
+      );
+
+      results.push({
+        tenantId,
+        success: true,
+        result,
+      });
+    } catch (error) {
+      results.push({
+        tenantId,
+        success: false,
+        error: error.message,
+      });
+    } finally {
+      if (client) {
+        try {
+          await client.query("RESET app.tenant_id");
+          client.release();
+        } catch (error) {
+          console.error(
+            `[closeScheduler] Failed to reset tenant ${tenantId}:`,
+            error.message
+          );
+
+          // Discard connection if tenant state cannot be reset.
+          client.release(error);
+        }
+      }
+    }
+  }
+
+  return {
+    asOfDate,
+    tenants: results,
+  };
+}
+
+// Mark the current tenant's accounting period CLOSED.
+async function closePeriodFor(asOfDate) {
+  const db = getDbClient();
+
+  const { rows } = await db.query(
+    `UPDATE accounting_periods
+        SET status = 'CLOSED',
+            updated_at = CURRENT_TIMESTAMP
+      WHERE $1 BETWEEN start_date AND end_date
+      RETURNING id, period_label, status`,
+    [asOfDate]
+  );
+
+  return rows[0] || null;
+}
+
+// Reopen the current tenant's accounting period.
+async function reopenPeriodFor(asOfDate) {
+  const db = getDbClient();
+
+  const { rows } = await db.query(
+    `UPDATE accounting_periods
+        SET status = 'OPEN',
+            updated_at = CURRENT_TIMESTAMP
+      WHERE $1 BETWEEN start_date AND end_date
+      RETURNING id, period_label, status`,
+    [asOfDate]
+  );
+
+  return rows[0] || null;
+}
+
+let timer = null;
+
+function start() {
+  if (
+    String(process.env.GL_CLOSE_SCHEDULER || "").toLowerCase() !== "on"
+  ) {
+    return;
+  }
+
+  const dom = Math.min(
+    28,
+    Math.max(1, Number(process.env.GL_CLOSE_DOM) || 1)
+  );
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  let lastRunMonth = null;
+
+  const tick = async () => {
+    const now = new Date();
+
+    const monthKey =
+      `${now.getUTCFullYear()}-${now.getUTCMonth()}`;
+
+    if (
+      now.getUTCDate() === dom &&
+      lastRunMonth !== monthKey
+    ) {
+      lastRunMonth = monthKey;
+
+      const asOfDate = priorMonthEnd(
+        now.toISOString().slice(0, 10)
+      );
+
+      try {
+        const result = await runMonthlyCloseForAllTenants({
+          asOfDate,
+          userId: null,
+        });
+
+        console.log(
+          `[closeScheduler] Monthly close completed for ${asOfDate}:`,
+          JSON.stringify(result).slice(0, 500)
+        );
+      } catch (error) {
+        console.error(
+          "[closeScheduler] Monthly close failed:",
+          error.message
+        );
+      }
+    }
+  };
+
+  timer = setInterval(tick, DAY_MS);
+
+  if (timer.unref) {
+    timer.unref();
+  }
+
+  console.log(
+    `[closeScheduler] enabled (day-of-month ${dom})`
+  );
+}
+
+function stop() {
+  if (timer) {
+    clearInterval(timer);
+  }
+
+  timer = null;
+}
+
+module.exports = {
+  runMonthlyClose,
+  runMonthlyCloseForAllTenants,
+  closePeriodFor,
+  reopenPeriodFor,
+  start,
+  stop,
+  priorMonthEnd,
+};

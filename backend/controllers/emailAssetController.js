@@ -1,9 +1,8 @@
+
 const fs = require("fs");
 const path = require("path");
 const renderer = require("../services/email/renderer");
 const assetStore = require("../services/email/assetStore");
-
-const { uploadDir } = assetStore;
 
 const safeAssetName = (name) => {
   const clean = path.basename(String(name || ""));
@@ -12,26 +11,53 @@ const safeAssetName = (name) => {
 
 const list = async (_req, res) => {
   try {
-    return res.json({ success: true, data: assetStore.readAssets(), base_url: renderer.publicBase() });
+    return res.json({
+      success: true,
+      data: assetStore.readAssets(),
+      base_url: renderer.publicBase(),
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
 const upload = async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ success: false, message: "No image uploaded" });
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image uploaded",
+      });
+    }
+
     assetStore.invalidate();
 
-    const uploaded = assetStore.readAssets().find((a) => a.filename === req.file.filename);
+    const uploaded = assetStore
+      .readAssets()
+      .find((asset) => asset.filename === req.file.filename);
+
     const role = uploaded?.role || "other";
 
+    // Keep only one logo, banner or footer per tenant.
     if (role !== "other") {
-      for (const a of assetStore.readAssets()) {
-        if (a.role !== role || a.filename === req.file.filename) continue;
-        try { fs.unlinkSync(path.join(uploadDir, a.filename)); } catch { /* already gone */ }
-        assetStore.invalidate();
+      for (const asset of assetStore.readAssets()) {
+        if (asset.role !== role || asset.filename === req.file.filename) {
+          continue;
+        }
+
+        const target = path.join(assetStore.getTenantDir(), asset.filename);
+
+        try {
+          fs.unlinkSync(target);
+        } catch (err) {
+          if (err.code !== "ENOENT") throw err;
+        }
       }
+
+      assetStore.invalidate();
     }
 
     return res.status(201).json({
@@ -46,23 +72,45 @@ const upload = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
 const remove = async (req, res) => {
   try {
     const name = safeAssetName(req.params.filename);
-    if (!name) return res.status(400).json({ success: false, message: "Invalid file name" });
 
-    const target = path.join(uploadDir, name);
-    if (!fs.existsSync(target)) return res.status(404).json({ success: false, message: "Image not found" });
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file name",
+      });
+    }
+
+    const target = path.join(assetStore.getTenantDir(), name);
+
+    if (!fs.existsSync(target)) {
+      return res.status(404).json({
+        success: false,
+        message: "Image not found",
+      });
+    }
 
     fs.unlinkSync(target);
     assetStore.invalidate();
-    return res.json({ success: true, message: "Image deleted" });
+
+    return res.json({
+      success: true,
+      message: "Image deleted",
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 

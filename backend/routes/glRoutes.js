@@ -1,14 +1,16 @@
+
 const express = require("express");
 const glController = require("../controllers/glController");
 const { authenticate } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const router = express.Router();
 const finance = permit("accounting", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN");
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every GL route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/chart-of-accounts", finance, glController.getChartOfAccounts);
 router.post("/chart-of-accounts", finance, glController.createAccount);
@@ -25,7 +27,7 @@ router.get("/reports/general-ledger", finance, glController.getGeneralLedger);
 router.get("/reports/cash-flow", finance, glController.getCashFlow);
 router.get("/reports/:type/export", finance, glController.exportReport);
 
-// Period close — FX revaluation + accrual/deferral recognition (manual "run now")
+// Period close — FX revaluation + accrual/deferral recognition
 router.post("/fx-revalue", finance, glController.postFxRevalue);
 router.get("/recognition/schedules", finance, glController.listRecognitionSchedules);
 router.post("/recognition/schedules", finance, glController.createRecognitionSchedule);

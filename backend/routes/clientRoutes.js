@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const clientController = require("../controllers/clientController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
@@ -8,7 +9,7 @@ const { scopeAccess } = require("../middleware/scopeMiddleware");
 
 // Row-level RBAC: attach the caller's allowed entities/locations to every
 // client request so the controller can scope reads and validate writes.
-router.use(authenticate, scopeAccess);
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/", authenticate, clientController.getAllClients);
 router.get("/:id/overview", authenticate, clientController.getClientOverview);

@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,9 +6,11 @@ const attachmentController = require("../controllers/attachmentController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
 const { uploadDocument } = require("../middleware/uploadDocument");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
-// Row-level RBAC scope on every attachment route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
+
 const finance = authorize("SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN");
 
 // Specific route first so it isn't shadowed by "/:entityType/:entityId".

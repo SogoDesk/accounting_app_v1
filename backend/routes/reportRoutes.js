@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
 const { authenticate: auth } = require("../middleware/authMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { buildCsv, sendCsvResponse } = require("../utils/exportUtils");
@@ -10,7 +11,7 @@ const { sendReport } = require("../services/reports/reportExport");
 // Row-level RBAC: every report/dashboard query is scoped to the caller's
 // allowed entities (== regions.id). authenticate runs first, then scopeAccess
 // attaches req.allowedEntityIds / req.scopeEnforced.
-router.use(auth, scopeAccess);
+router.use(auth, tenantMiddleware, scopeAccess);
 
 // The aggregate dashboard summaries stay broad (the Dashboard is open to every
 // role, and each query is already entity-scoped). But the CSV EXTRACTS pull

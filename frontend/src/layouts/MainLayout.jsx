@@ -112,6 +112,11 @@ const NAV = [
   { path: '/settings/audit', label: 'Audit Logs', icon: 'shield', group: 'settings', roles: ['SUPER_ADMIN', 'ADMIN'], perm: 'auditLogs' },
 ]
 
+
+
+
+
+
 const NAV_GROUP_ORDER = [
   { key: 'home', label: 'Home', icon: 'grid' },
   { key: 'sales', label: 'Sales', icon: 'card' },
@@ -262,7 +267,7 @@ const iconFor = (type) => {
 }
 
 export default function MainLayout({ children }) {
-  const { user, logout, hasRole } = useAuth()
+  const { user, tenant, logout, hasRole } = useAuth()
   const { dark, toggle, accent, setAccent, accents } = useTheme()
   // The top-bar region pill IS the app-wide entity switcher: it writes the
   // shared EntityContext (`entityId`), which the dashboard filters on and every
@@ -315,9 +320,12 @@ export default function MainLayout({ children }) {
   }, [])
 
   const navItems = useMemo(() => NAV.filter((item) => {
-    if (myPerms === null) return hasRole(...item.roles)
-    return item.perm ? myPerms.includes(item.perm) : hasRole(...item.roles)
-  }), [hasRole, myPerms])
+  if (myPerms === null) return hasRole(...(item.roles || []))
+
+  return item.perm
+    ? myPerms.includes(item.perm)
+    : hasRole(...(item.roles || []))
+}), [hasRole, myPerms, user])
   const groupedNavItems = useMemo(() => {
     return NAV_GROUP_ORDER.map((group) => ({
       ...group,
@@ -554,7 +562,7 @@ export default function MainLayout({ children }) {
             <div className="sdb-logo" aria-hidden="true">SD</div>
             <div className="sdb-brand-text">
               <div className="sdb-brand-title">SogoDesk Books</div>
-              <div className="sdb-brand-sub">Multi-entity accounting &amp; staffing</div>
+              <div className="sdb-brand-sub">{tenant?.name || 'Multi-entity accounting & staffing'}</div>
             </div>
           </div>
 

@@ -1,13 +1,15 @@
+
 const express = require("express");
 const vendorPaymentController = require("../controllers/vendorPaymentController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const router = express.Router();
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every vendor-payment route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/", authenticate, permit("vendorPayments", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"), vendorPaymentController.getAllVendorPayments);
 router.get("/bill-options", authenticate, permit("vendorPayments", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"), vendorPaymentController.getVendorPaymentBillOptions);

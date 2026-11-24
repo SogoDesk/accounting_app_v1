@@ -1,5 +1,14 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import TenantsPage from './pages/platform/TenantsPage'
+import PlatformLoginPage from './pages/platform/PlatformLoginPage'
+import PlatformDashboardPage from './pages/platform/PlatformDashboardPage'
+import TenantOnboardingPage from './pages/platform/TenantOnboardingPage'
+import TenantDetailPage from './pages/platform/TenantDetailPage'
+import AcceptInvitePage from './pages/AcceptInvitePage'
+import PlatformLayout from './layouts/PlatformLayout'
+import { PlatformAuthProvider } from './context/PlatformAuthContext'
+import { PlatformRoute, PlatformPublicRoute } from './components/PlatformRoute'
+import {useAuth}  from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
 import LoginPage from './pages/LoginPage'
@@ -56,6 +65,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/dashboard" element={<P page={<DashboardPage />} />} />
       <Route path="/regions" element={<P page={<RegionsPage />} roles={PAGE_ACCESS.regions} />} />
       <Route path="/clients" element={<P page={<ClientsPage />} roles={PAGE_ACCESS.clients} />} />
@@ -89,7 +99,27 @@ export default function App() {
       <Route path="/audit-logs" element={<P page={<AuditLogsPage />} roles={PAGE_ACCESS.auditLogs} />} />
       <Route path="/settings" element={<P page={<SettingsPage />} roles={PAGE_ACCESS.settings} />} />
       <Route path="/settings/:tab" element={<P page={<SettingsPage />} roles={PAGE_ACCESS.settings} />} />
+
+      {/* Platform (operator) console — separate login, session and layout */}
+      <Route path="/platform" element={<PlatformAuthProvider><Outlet /></PlatformAuthProvider>}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="login" element={<PlatformPublicRoute><PlatformLoginPage /></PlatformPublicRoute>} />
+        <Route element={<PlatformRoute><PlatformLayout /></PlatformRoute>}>
+          <Route path="dashboard" element={<PlatformDashboardPage />} />
+          <Route path="tenants" element={<TenantsPage />} />
+          <Route path="tenants/new" element={<TenantOnboardingPage />} />
+          <Route path="tenants/:id" element={<TenantDetailPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
+
+
+
+
+
+
+

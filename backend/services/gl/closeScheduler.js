@@ -1,111 +1,291 @@
+
 // =============================================================================
-// closeScheduler — monthly period-close automation (Blueprint Step 5)
+// closeScheduler — monthly period-close automation
 //
-// Runs the two period-close engines across every legal entity for an as-of
-// date: fxRevaluationService.revalue + recognitionService.runDue. Exposed as
-// runMonthlyClose() for the manual "run now" endpoint, and as an opt-in daily
-// timer (start()) that fires once on the configured day-of-month.
+// Manual close:
+// Uses the tenant connection created by tenantMiddleware.
 //
-// The timer is OFF by default (no surprise postings); enable by setting
-// GL_CLOSE_SCHEDULER=on (and optionally GL_CLOSE_DOM=<1-28>, default 1 -> runs
-// the close for the just-ended prior month on the 1st). server.js calls start()
-// which no-ops unless enabled.
+// Automatic close:
+// Reads all tenant IDs and runs the close separately for each tenant.
 // =============================================================================
 
 const pool = require("../../config/db");
+const {
+  getTenantClient,
+  runWithTenant,
+} = require("../../config/tenantContext");
+
 const fxRevaluationService = require("./fxRevaluationService");
 const recognitionService = require("./recognitionService");
 
-// last day of the month immediately before `isoDate` (typical close as-of).
+// Last day of the month immediately before isoDate.
 function priorMonthEnd(isoDate) {
   const d = new Date(`${isoDate}T00:00:00Z`);
-  d.setUTCDate(1);                 // first of current month
-  d.setUTCDate(0);                 // -> last day of previous month
+  d.setUTCDate(1);
+  d.setUTCDate(0);
   return d.toISOString().slice(0, 10);
 }
 
+// Get the current tenant's database connection.
+function getDbClient() {
+  const client = getTenantClient();
+
+  if (!client) {
+    throw new Error("Tenant database connection not found.");
+  }
+
+  return client;
+}
+
 /**
- * Run FX revaluation + recognition for every legal entity as of a date.
- * @param params { asOfDate (YYYY-MM-DD), userId? }
+ * Run the close for the current tenant.
+ * Used by the manual API endpoint and by the scheduled tenant runner.
  */
 async function runMonthlyClose({ asOfDate, userId } = {}) {
-  if (!asOfDate) throw new Error("asOfDate is required");
+  if (!asOfDate) {
+    throw new Error("asOfDate is required");
+  }
+
+  // Make sure this operation is running inside a tenant context.
+  getDbClient();
+
   const { rows: entities } = await pool.query(
-    `SELECT DISTINCT region_id FROM org_units
-      WHERE is_legal_entity = true AND region_id IS NOT NULL ORDER BY region_id`,
+    `SELECT DISTINCT region_id
+       FROM org_units
+      WHERE is_legal_entity = true
+        AND region_id IS NOT NULL
+      ORDER BY region_id`,
   );
 
   const results = [];
-  for (const e of entities) {
-    const entityId = e.region_id;
-    const out = { entityId };
-    try { out.fx = await fxRevaluationService.revalue({ entityId, asOfDate, userId }); }
-    catch (err) { out.fxError = err.message; }
-    results.push(out);
+
+  for (const entity of entities) {
+    const entityId = entity.region_id;
+    const result = { entityId };
+
+    try {
+      result.fx = await fxRevaluationService.revalue({
+        entityId,
+        asOfDate,
+        userId,
+      });
+    } catch (error) {
+      result.fxError = error.message;
+    }
+
+    results.push(result);
   }
-  // recognition schedules carry their own entity/location; run once for all.
+
+  // Run recognition schedules for this tenant.
   let recognition;
-  try { recognition = await recognitionService.runDue({ asOfDate, userId }); }
-  catch (err) { recognition = { error: err.message }; }
 
-  // Lock the period once FX + recognition have run. Postings into a CLOSED
-  // period are then rejected by ledgerEngine's period guard. Reopen if needed.
+  try {
+    recognition = await recognitionService.runDue({
+      asOfDate,
+      userId,
+    });
+  } catch (error) {
+    recognition = { error: error.message };
+  }
+
+  // Close this tenant's accounting period.
   let period = null;
-  try { period = await closePeriodFor(asOfDate); }
-  catch (err) { period = { error: err.message }; }
 
-  return { asOfDate, entities: results, recognition, period };
+  try {
+    period = await closePeriodFor(asOfDate);
+  } catch (error) {
+    period = { error: error.message };
+  }
+
+  return {
+    asOfDate,
+    entities: results,
+    recognition,
+    period,
+  };
 }
 
-// Mark the accounting period covering `asOfDate` CLOSED (idempotent).
+// Run the monthly close separately for every tenant.
+async function runMonthlyCloseForAllTenants({ asOfDate, userId } = {}) {
+  if (!asOfDate) {
+    throw new Error("asOfDate is required");
+  }
+
+  // The tenants table is global, so this query runs outside tenant context.
+  const { rows: tenants } = await pool.query(
+    "SELECT id FROM tenants ORDER BY id",
+  );
+
+  const results = [];
+
+  for (const tenant of tenants) {
+    const tenantId = tenant.id;
+    let client;
+    let released = false;
+
+    try {
+      // Get a dedicated database connection for this tenant.
+      client = await pool.connect();
+
+      // Set the tenant ID on this database connection.
+      await client.query(
+        "SELECT set_config('app.tenant_id', $1, false)",
+        [String(tenantId)],
+      );
+
+      // Run all close operations inside this tenant's context.
+      const result = await runWithTenant(
+        client,
+        tenantId,
+        () => runMonthlyClose({ asOfDate, userId }),
+      );
+
+      results.push({
+        tenantId,
+        success: true,
+        result,
+      });
+    } catch (error) {
+      results.push({
+        tenantId,
+        success: false,
+        error: error.message,
+      });
+    } finally {
+      if (client && !released) {
+        released = true;
+
+        try {
+          await client.query("RESET app.tenant_id");
+          client.release();
+        } catch (error) {
+          console.error(
+            `[closeScheduler] Failed to reset tenant ${tenantId}:`,
+            error.message,
+          );
+
+          // Discard the connection if its tenant state cannot be reset.
+          client.release(error);
+        }
+      }
+    }
+  }
+
+  return {
+    asOfDate,
+    tenants: results,
+  };
+}
+
+// Mark the current tenant's accounting period CLOSED.
 async function closePeriodFor(asOfDate) {
-  const { rows } = await pool.query(
-    `UPDATE accounting_periods SET status = 'CLOSED', updated_at = CURRENT_TIMESTAMP
+  const db = getDbClient();
+
+  const { rows } = await db.query(
+    `UPDATE accounting_periods
+        SET status = 'CLOSED',
+            updated_at = CURRENT_TIMESTAMP
       WHERE $1 BETWEEN start_date AND end_date
       RETURNING id, period_label, status`,
     [asOfDate],
   );
+
   return rows[0] || null;
 }
 
-// Reopen the accounting period covering `asOfDate` (escape hatch after a close).
+// Reopen the current tenant's accounting period.
 async function reopenPeriodFor(asOfDate) {
-  const { rows } = await pool.query(
-    `UPDATE accounting_periods SET status = 'OPEN', updated_at = CURRENT_TIMESTAMP
+  const db = getDbClient();
+
+  const { rows } = await db.query(
+    `UPDATE accounting_periods
+        SET status = 'OPEN',
+            updated_at = CURRENT_TIMESTAMP
       WHERE $1 BETWEEN start_date AND end_date
       RETURNING id, period_label, status`,
     [asOfDate],
   );
+
   return rows[0] || null;
 }
 
 let timer = null;
+
 function start() {
-  if (String(process.env.GL_CLOSE_SCHEDULER || "").toLowerCase() !== "on") return;
-  const dom = Math.min(28, Math.max(1, Number(process.env.GL_CLOSE_DOM) || 1));
+  if (
+    String(process.env.GL_CLOSE_SCHEDULER || "").toLowerCase() !== "on"
+  ) {
+    return;
+  }
+
+  const dom = Math.min(
+    28,
+    Math.max(1, Number(process.env.GL_CLOSE_DOM) || 1),
+  );
+
   const DAY_MS = 24 * 60 * 60 * 1000;
   let lastRunMonth = null;
 
   const tick = async () => {
     const now = new Date();
-    const monthKey = `${now.getUTCFullYear()}-${now.getUTCMonth()}`;
-    if (now.getUTCDate() === dom && lastRunMonth !== monthKey) {
+
+    const monthKey =
+      `${now.getUTCFullYear()}-${now.getUTCMonth()}`;
+
+    if (
+      now.getUTCDate() === dom &&
+      lastRunMonth !== monthKey
+    ) {
       lastRunMonth = monthKey;
-      const asOfDate = priorMonthEnd(now.toISOString().slice(0, 10));
+
+      const asOfDate = priorMonthEnd(
+        now.toISOString().slice(0, 10),
+      );
+
       try {
-        const res = await runMonthlyClose({ asOfDate, userId: null });
-        console.log(`[closeScheduler] monthly close run for ${asOfDate}:`, JSON.stringify(res).slice(0, 300));
-      } catch (err) {
-        console.error("[closeScheduler] monthly close failed:", err.message);
+        const result = await runMonthlyCloseForAllTenants({
+          asOfDate,
+          userId: null,
+        });
+
+        console.log(
+          `[closeScheduler] Monthly close completed for ${asOfDate}:`,
+          JSON.stringify(result).slice(0, 500),
+        );
+      } catch (error) {
+        console.error(
+          "[closeScheduler] Monthly close failed:",
+          error.message,
+        );
       }
     }
   };
 
   timer = setInterval(tick, DAY_MS);
-  if (timer.unref) timer.unref();
-  console.log(`[closeScheduler] enabled (day-of-month ${dom})`);
+
+  if (timer.unref) {
+    timer.unref();
+  }
+
+  console.log(
+    `[closeScheduler] enabled (day-of-month ${dom})`,
+  );
 }
 
-function stop() { if (timer) clearInterval(timer); timer = null; }
+function stop() {
+  if (timer) {
+    clearInterval(timer);
+  }
 
-module.exports = { runMonthlyClose, closePeriodFor, reopenPeriodFor, start, stop, priorMonthEnd };
+  timer = null;
+}
+
+module.exports = {
+  runMonthlyClose,
+  runMonthlyCloseForAllTenants,
+  closePeriodFor,
+  reopenPeriodFor,
+  start,
+  stop,
+  priorMonthEnd,
+};

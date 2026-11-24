@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const { ensureSettingsSchema, PERMISSION_KEYS } = require("../modules/settings/ensureSettingsSchema");
 const { auditLog } = require("../middleware/auditMiddleware");
 
@@ -37,7 +38,14 @@ const createRole = async (req, res) => {
       : [];
     if (!role_name) return res.status(400).json({ success: false, message: "Role name required" });
 
-    const client = await pool.connect();
+    const client = getTenantClient();
+    if (!client) {
+      return res.status(500).json({
+        success: false,
+        message: "Tenant database connection not found.",
+      });
+    }
+
     try {
       await client.query("BEGIN");
       const ins = await client.query(
@@ -61,8 +69,6 @@ const createRole = async (req, res) => {
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
-    } finally {
-      client.release();
     }
   } catch (err) {
     if (err.code === "23505") return res.status(400).json({ success: false, message: "A role with that name already exists" });
@@ -85,7 +91,14 @@ const updateRole = async (req, res) => {
     // System role names are immutable (authorize() depends on them); custom roles can be renamed.
     const nextName = !role.is_system && req.body.role_name ? normRoleName(req.body.role_name) : role.role_name;
 
-    const client = await pool.connect();
+    const client = getTenantClient();
+    if (!client) {
+      return res.status(500).json({
+        success: false,
+        message: "Tenant database connection not found.",
+      });
+    }
+
     try {
       await client.query("BEGIN");
       await client.query(
@@ -105,8 +118,6 @@ const updateRole = async (req, res) => {
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
-    } finally {
-      client.release();
     }
     await auditLog({
       userId: req.user?.id, userEmail: req.user?.email, action: "UPDATE",

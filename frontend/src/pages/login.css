@@ -401,3 +401,14 @@
     font-size: 24px;
   }
 }
+
+/* Multi-tenant: shown instead of the company field on <slug>.domain hosts */
+.login-tenant-chip {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--primary-strong) 14%, transparent);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}

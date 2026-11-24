@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,10 +6,12 @@ const paymentController = require("../controllers/paymentController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every payment route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
+// Get all payments
 router.get(
   "/",
   authenticate,
@@ -16,6 +19,7 @@ router.get(
   paymentController.getAllPayments,
 );
 
+// Get invoice options
 router.get(
   "/invoice-options",
   authenticate,
@@ -23,6 +27,7 @@ router.get(
   paymentController.getPaymentInvoiceOptions,
 );
 
+// Get next payment code
 router.get(
   "/next-code",
   authenticate,
@@ -30,6 +35,7 @@ router.get(
   paymentController.getNextPaymentCode,
 );
 
+// Export payments
 router.get(
   "/export",
   authenticate,
@@ -37,6 +43,7 @@ router.get(
   paymentController.exportPayments,
 );
 
+// Download payment receipt
 router.get(
   "/:id/receipt",
   authenticate,
@@ -44,6 +51,7 @@ router.get(
   paymentController.downloadReceiptPdf,
 );
 
+// Get payment by ID
 router.get(
   "/:id",
   authenticate,
@@ -51,6 +59,7 @@ router.get(
   paymentController.getPaymentById,
 );
 
+// Create payment
 router.post(
   "/",
   authenticate,
@@ -58,6 +67,7 @@ router.post(
   paymentController.createPayment,
 );
 
+// Update payment
 router.put(
   "/:id",
   authenticate,
@@ -65,6 +75,7 @@ router.put(
   paymentController.updatePayment,
 );
 
+// Delete payment
 router.delete(
   "/:id",
   authenticate,

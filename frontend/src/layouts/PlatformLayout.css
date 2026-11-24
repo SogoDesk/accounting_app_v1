@@ -1,0 +1,166 @@
+/* Platform console extras. The shell itself comes from shell.css (sdb-*),
+   dashboards from DashboardPage.css (dash-*) and lists from ClientsPage.css
+   (cl-*), so the console looks the same as the company app. */
+
+/* Top-bar "Onboard client" call to action */
+.plat-top-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent, var(--primary));
+  color: var(--accent-contrast, #fff);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.plat-top-cta svg { width: 16px; height: 16px; }
+.plat-top-cta:hover { filter: brightness(1.06); }
+
+@media (max-width: 720px) {
+  .plat-top-cta span { display: none; }
+  .plat-top-cta { width: 36px; padding: 0; justify-content: center; }
+}
+
+/* Clickable dashboard list rows */
+.plat-click { cursor: pointer; border-radius: 10px; }
+.plat-click:hover { background: var(--surface-sunken, var(--surface2)); }
+
+/* Small buttons inside table rows */
+.plat-btn-sm { height: 30px !important; padding: 0 12px !important; font-size: 12px !important; }
+
+.plat-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.plat-danger-text { color: var(--danger-text, var(--danger)) !important; }
+.plat-muted-sm { font-size: 12px; color: var(--muted, var(--text3)); }
+
+/* Cards used by wizard / success / invite link */
+.plat-card { padding: 22px 24px; max-width: 860px; }
+.plat-invite-card { padding: 18px 22px; margin-top: 16px; }
+
+.plat-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.plat-note {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted, var(--text2));
+  background: var(--surface-sunken, var(--surface2));
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* Onboarding stepper */
+.plat-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.plat-stepper li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted, var(--text3));
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.plat-stepper li.current {
+  color: var(--accent-text, var(--primary));
+  background: var(--accent-soft, var(--primary-soft));
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.plat-stepper li.done { color: var(--text); }
+
+.plat-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface-sunken, var(--surface2));
+}
+
+.plat-stepper li.current .plat-step-num {
+  background: var(--accent, var(--primary));
+  color: #fff;
+}
+
+.plat-stepper li.done .plat-step-num {
+  background: var(--success-tint, var(--success-soft));
+  color: var(--success-text, var(--success));
+}
+
+/* Review step */
+.plat-review {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px 16px;
+  margin: 4px 0 0;
+}
+.plat-review dt { color: var(--muted, var(--text3)); font-size: 13px; }
+.plat-review dd { margin: 0; font-weight: 500; }
+
+/* Success screen */
+.plat-success { text-align: center; margin: 0 auto; }
+.plat-success h2 { margin: 10px 0 4px; }
+.plat-success .plat-actions { justify-content: center; }
+
+.plat-success-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  color: var(--success-text, var(--success));
+  background: var(--success-tint, var(--success-soft));
+}
+
+.plat-callout {
+  margin: 20px 0 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft, var(--info-soft));
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+}
+
+/* Invite link */
+.plat-invite {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  text-align: left;
+}
+.plat-invite-row { display: flex; gap: 8px; }
+.plat-invite-row .form-control { flex: 1; min-width: 0; }
+
+@media (max-width: 600px) {
+  .plat-review { grid-template-columns: 1fr; gap: 2px; }
+  .plat-review dd { margin-bottom: 10px; }
+  .plat-card { padding: 18px 16px; }
+}

@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import {
+  getStoredTenant,
+  getSubdomainTenant,
+  isValidSlug,
+  normalizeSlug,
+} from "../utils/tenant";
 import logo from "../assets/tetriq-no-bg.png";
 import "./login.css";
 
@@ -52,6 +58,10 @@ function LoginPage() {
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
 
+  const hostTenant = getSubdomainTenant();
+  const [company, setCompany] = useState(
+    () => hostTenant || getStoredTenant()?.slug || "",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -62,6 +72,16 @@ function LoginPage() {
     e.preventDefault();
     setError("");
 
+    const slug = normalizeSlug(hostTenant || company);
+    if (!slug) {
+      setError("Please enter your company code.");
+      return;
+    }
+    if (!isValidSlug(slug)) {
+      setError("Company code can only contain letters, numbers and hyphens.");
+      return;
+    }
+
     if (!email || !password) {
       setError("Please enter both email and password.");
       return;
@@ -69,7 +89,7 @@ function LoginPage() {
 
     try {
       setLoading(true);
-      await login(email.trim(), password);
+      await login(email.trim(), password, slug);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
@@ -127,6 +147,27 @@ function LoginPage() {
           <p>Revenue Management Platform</p>
 
           <form onSubmit={handleSubmit} className="login-form">
+            {hostTenant ? (
+              <div className="login-tenant-chip" aria-live="polite">
+                Signing in to <strong>{hostTenant}</strong>
+              </div>
+            ) : (
+              <>
+                <label htmlFor="login-company">Company Code</label>
+                <input
+                  id="login-company"
+                  type="text"
+                  autoComplete="organization"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="e.g. acme"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  aria-label="Company code"
+                />
+              </>
+            )}
+
             <label htmlFor="login-email">Email Address</label>
             <input
               id="login-email"

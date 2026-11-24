@@ -1,4 +1,6 @@
+
 const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const glReports = require("../services/gl/glReports");
 const postingService = require("../services/gl/postingService");
 const fxRevaluationService = require("../services/gl/fxRevaluationService");
@@ -88,9 +90,7 @@ const createAccount = async (req, res) => {
   }
 };
 
-// PUT /api/gl/chart-of-accounts/:id  { account_name?, account_type?, account_code?, is_active? }
-// Rename and active-toggle are always allowed; code/type changes are blocked once
-// the account has posted lines (would silently rewrite history in the reports).
+// PUT /api/gl/chart-of-accounts/:id
 const updateAccount = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -173,9 +173,9 @@ const getJournalEntries = async (req, res) => {
     if (to) { params.push(to); where.push(`je.entry_date <= $${params.length}`); }
     if (source) { params.push(source); where.push(`je.source = $${params.length}`); }
     if (status) { params.push(status); where.push(`je.status = $${params.length}`); }
-    // Row-level RBAC: restrict to the caller's allowed entities (regions).
     if (req.scopeEnforced && Array.isArray(req.allowedEntityIds)) {
-      params.push(req.allowedEntityIds); where.push(`je.entity_id = ANY($${params.length})`);
+      params.push(req.allowedEntityIds);
+      where.push(`je.entity_id = ANY($${params.length})`);
     }
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
@@ -183,7 +183,8 @@ const getJournalEntries = async (req, res) => {
       `SELECT COUNT(*) FROM journal_entries je ${whereSql}`, params,
     );
 
-    params.push(limit); params.push((page - 1) * limit);
+    params.push(limit);
+    params.push((page - 1) * limit);
     const { rows } = await pool.query(
       `SELECT je.id, je.entry_no, je.entry_date, je.description, je.source,
               je.source_ref, je.status, je.entity_id, r.region_name AS entity_name,
@@ -199,7 +200,9 @@ const getJournalEntries = async (req, res) => {
     );
 
     return res.json({
-      success: true, glReady: true, data: rows,
+      success: true,
+      glReady: true,
+      data: rows,
       pagination: { total: Number(countResult.rows[0].count), page, limit },
     });
   } catch (error) {
@@ -237,9 +240,6 @@ const getJournalEntryById = async (req, res) => {
 };
 
 // POST /api/gl/journal-entries
-// Manual journal entry posted by a finance user. Lines are in the entity's
-// functional currency. Posts through the immutable ledgerEngine (balanced,
-// period-checked, hash-chained) inside a single transaction.
 const createManualJournalEntry = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -255,20 +255,19 @@ const createManualJournalEntry = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized for this entity." });
     }
 
-    // Normalize + validate each line: exactly one of debit/credit, positive.
     const lines = [];
     for (const l of rawLines) {
       const accountId = Number(l.accountId);
       const debit = Math.round((Number(l.debit || 0) + Number.EPSILON) * 100) / 100;
       const credit = Math.round((Number(l.credit || 0) + Number.EPSILON) * 100) / 100;
-      if (!accountId) continue; // skip blank rows
+      if (!accountId) continue;
       if (debit < 0 || credit < 0) {
         return res.status(400).json({ success: false, message: "Amounts cannot be negative." });
       }
       if (debit > 0 && credit > 0) {
         return res.status(400).json({ success: false, message: "Each line is either a debit or a credit, not both." });
       }
-      if (debit === 0 && credit === 0) continue; // skip empty rows
+      if (debit === 0 && credit === 0) continue;
       lines.push({ accountId, debit, credit, memo: (l.memo || "").trim() || null });
     }
 
@@ -288,8 +287,6 @@ const createManualJournalEntry = async (req, res) => {
       return res.status(400).json({ success: false, message: "Entry total cannot be zero." });
     }
 
-    // Block manual posting to system control accounts (AR/AP) — those tie back
-    // to invoices/bills and must only be moved by the subledgers.
     const accountIds = [...new Set(lines.map((l) => l.accountId))];
     const acc = await pool.query(
       `SELECT id, account_code, account_name, is_control, is_active
@@ -310,9 +307,16 @@ const createManualJournalEntry = async (req, res) => {
       }
     }
 
-    const client = await pool.connect();
+    // Reuse the tenant connection provided by tenantMiddleware.
+    const client = getTenantClient();
+
+    if (!client) {
+      throw new Error("Tenant database connection not found.");
+    }
+
     try {
       await client.query("BEGIN");
+
       const result = await postingService.postManualEntry(client, {
         entityId,
         entryDate,
@@ -320,13 +324,25 @@ const createManualJournalEntry = async (req, res) => {
         lines,
         userId: req.user?.id,
       });
+
       await client.query("COMMIT");
-      return res.status(201).json({ success: true, glReady: true, data: result });
+
+      return res.status(201).json({
+        success: true,
+        glReady: true,
+        data: result,
+      });
     } catch (err) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ success: false, message: err.message });
-    } finally {
-      client.release();
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Manual journal rollback failed:", rollbackError.message);
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
     }
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -373,8 +389,6 @@ const getBalanceSheet = async (req, res) => {
 };
 
 // GET /api/gl/reports/consolidated?rootLocationId=&asOf=
-// Consolidated statements over an org subtree with intercompany (1600/2600)
-// eliminations; eliminations.intercompanyNet must be ~0.
 const getConsolidated = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -432,8 +446,7 @@ const getCashFlow = async (req, res) => {
   }
 };
 
-// GET /api/gl/reports/:type/export?format=xlsx|pdf|csv&entityId=&asOf=&from=&to=
-// Download trial-balance / profit-and-loss / balance-sheet as Excel, PDF, or CSV.
+// GET /api/gl/reports/:type/export
 const exportReport = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -449,8 +462,10 @@ const exportReport = async (req, res) => {
         title: "Trial Balance",
         subtitle: `As of ${d.asOf}${d.currency ? " · " + d.currency : ""}`,
         columns: [
-          { key: "account_code", label: "Code" }, { key: "account_name", label: "Account" },
-          { key: "debit", label: "Debit", type: "money" }, { key: "credit", label: "Credit", type: "money" },
+          { key: "account_code", label: "Code" },
+          { key: "account_name", label: "Account" },
+          { key: "debit", label: "Debit", type: "money" },
+          { key: "credit", label: "Credit", type: "money" },
         ],
         rows: d.rows,
         totals: { debit: d.totals.debit, credit: d.totals.credit },
@@ -465,8 +480,10 @@ const exportReport = async (req, res) => {
         title: "Profit and Loss",
         subtitle: `${d.from} → ${d.to}${d.currency ? " · " + d.currency : ""} · Net ${d.totals.netProfit}`,
         columns: [
-          { key: "section", label: "Section" }, { key: "account_code", label: "Code" },
-          { key: "account_name", label: "Account" }, { key: "amount", label: "Amount", type: "money" },
+          { key: "section", label: "Section" },
+          { key: "account_code", label: "Code" },
+          { key: "account_name", label: "Account" },
+          { key: "amount", label: "Amount", type: "money" },
         ],
         rows,
         totals: { amount: d.totals.netProfit, section: "Net profit" },
@@ -482,8 +499,10 @@ const exportReport = async (req, res) => {
         title: "Balance Sheet",
         subtitle: `As of ${d.asOf}${d.currency ? " · " + d.currency : ""} · ${d.totals.balanced ? "Balanced" : "OUT OF BALANCE"}`,
         columns: [
-          { key: "section", label: "Section" }, { key: "account_code", label: "Code" },
-          { key: "account_name", label: "Account" }, { key: "amount", label: "Amount", type: "money" },
+          { key: "section", label: "Section" },
+          { key: "account_code", label: "Code" },
+          { key: "account_name", label: "Account" },
+          { key: "amount", label: "Amount", type: "money" },
         ],
         rows,
         totals: { amount: d.totals.assets, section: "Total assets" },
@@ -494,9 +513,12 @@ const exportReport = async (req, res) => {
         title: "General Ledger",
         subtitle: `${d.from || "start"} → ${d.to}${d.currency ? " · " + d.currency : ""}`,
         columns: [
-          { key: "account_code", label: "Code" }, { key: "account_name", label: "Account" },
-          { key: "opening", label: "Opening", type: "money" }, { key: "debit", label: "Debit", type: "money" },
-          { key: "credit", label: "Credit", type: "money" }, { key: "closing", label: "Closing", type: "money" },
+          { key: "account_code", label: "Code" },
+          { key: "account_name", label: "Account" },
+          { key: "opening", label: "Opening", type: "money" },
+          { key: "debit", label: "Debit", type: "money" },
+          { key: "credit", label: "Credit", type: "money" },
+          { key: "closing", label: "Closing", type: "money" },
         ],
         rows: d.rows,
         totals: {
@@ -515,8 +537,10 @@ const exportReport = async (req, res) => {
         title: "Cash Flow",
         subtitle: `${d.from} → ${d.to}${d.currency ? " · " + d.currency : ""} · Net ${d.netChange}`,
         columns: [
-          { key: "section", label: "Activity" }, { key: "account_code", label: "Code" },
-          { key: "account_name", label: "Account" }, { key: "amount", label: "Cash in / (out)", type: "money" },
+          { key: "section", label: "Activity" },
+          { key: "account_code", label: "Code" },
+          { key: "account_name", label: "Account" },
+          { key: "amount", label: "Cash in / (out)", type: "money" },
         ],
         rows,
         totals: { amount: d.netChange, section: "Net change in cash" },
@@ -531,7 +555,7 @@ const exportReport = async (req, res) => {
   }
 };
 
-// POST /api/gl/fx-revalue  { entityId, asOfDate }
+// POST /api/gl/fx-revalue
 const postFxRevalue = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -565,7 +589,7 @@ const createRecognitionSchedule = async (req, res) => {
   }
 };
 
-// GET /api/gl/recognition/schedules?entityId=
+// GET /api/gl/recognition/schedules
 const listRecognitionSchedules = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -580,35 +604,41 @@ const listRecognitionSchedules = async (req, res) => {
   }
 };
 
-// POST /api/gl/recognition/run  { asOfDate }
+// POST /api/gl/recognition/run
 const runRecognition = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
     if (!req.body.asOfDate) {
       return res.status(400).json({ success: false, message: "asOfDate is required" });
     }
-    const data = await recognitionService.runDue({ asOfDate: req.body.asOfDate, userId: req.user?.id });
+    const data = await recognitionService.runDue({
+      asOfDate: req.body.asOfDate,
+      userId: req.user?.id,
+    });
     return res.json({ success: true, glReady: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/gl/period-close/run  { asOfDate }  — manual monthly-close trigger
+// POST /api/gl/period-close/run
 const runPeriodClose = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
     if (!req.body.asOfDate) {
       return res.status(400).json({ success: false, message: "asOfDate is required" });
     }
-    const data = await closeScheduler.runMonthlyClose({ asOfDate: req.body.asOfDate, userId: req.user?.id });
+    const data = await closeScheduler.runMonthlyClose({
+      asOfDate: req.body.asOfDate,
+      userId: req.user?.id,
+    });
     return res.json({ success: true, glReady: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/gl/period-close/reopen  { asOfDate }  — reopen a closed period.
+// POST /api/gl/period-close/reopen
 const reopenPeriod = async (req, res) => {
   try {
     if (!(await glReadiness())) return notReady(res);
@@ -616,7 +646,12 @@ const reopenPeriod = async (req, res) => {
       return res.status(400).json({ success: false, message: "asOfDate is required" });
     }
     const period = await closeScheduler.reopenPeriodFor(req.body.asOfDate);
-    if (!period) return res.status(404).json({ success: false, message: "No accounting period covers that date" });
+    if (!period) {
+      return res.status(404).json({
+        success: false,
+        message: "No accounting period covers that date",
+      });
+    }
     return res.json({ success: true, glReady: true, data: { period } });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

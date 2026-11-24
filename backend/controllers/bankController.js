@@ -6,6 +6,7 @@
 
 const pool = require("../config/db");
 const { auditLog } = require("../middleware/auditMiddleware");
+const { getTenantClient } = require("../config/tenantContext");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
 const { getSource, detectFileSource } = require("../services/banking/feedSources");
 const importService = require("../services/banking/importService");
@@ -107,7 +108,7 @@ const deleteAccount = async (req, res) => {
 
 // ---- statement import (auto feed) ------------------------------------------
 const importStatement = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient(); // request connection: app.tenant_id already set (RLS)
   try {
     if (!(await ready(db))) { return notReady(res); }
     const account = await loadAccountScoped(db, req, req.params.id);
@@ -132,7 +133,7 @@ const importStatement = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 // ---- transactions ----------------------------------------------------------
@@ -172,7 +173,7 @@ const suggestMatches = async (req, res) => {
 };
 
 const autoMatch = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient(); // request connection: app.tenant_id already set (RLS)
   try {
     if (!(await ready(db))) { return notReady(res); }
     const account = await loadAccountScoped(db, req, req.params.id);
@@ -182,7 +183,7 @@ const autoMatch = async (req, res) => {
     await db.query("COMMIT");
     return res.json({ success: true, message: `Matched ${out.matched} of ${out.total} unmatched`, data: out });
   } catch (e) { try { await db.query("ROLLBACK"); } catch (_) {} return res.status(500).json({ success: false, message: e.message }); }
-  finally { db.release(); }
+
 };
 
 const matchTransaction = async (req, res) => {
@@ -205,7 +206,7 @@ const unmatchTransaction = async (req, res) => {
 };
 
 const bookTransaction = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient(); // request connection: app.tenant_id already set (RLS)
   try {
     if (!(await ready(db))) { return notReady(res); }
     if (!(await loadTxnScoped(db, req, req.params.txnId))) return res.status(404).json({ success: false, message: "Transaction not found" });
@@ -217,7 +218,7 @@ const bookTransaction = async (req, res) => {
     await db.query("COMMIT");
     return res.json({ success: true, message: "Entry booked and matched", data: out });
   } catch (e) { try { await db.query("ROLLBACK"); } catch (_) {} return res.status(400).json({ success: false, message: e.message }); }
-  finally { db.release(); }
+
 };
 
 // ---- reconciliation --------------------------------------------------------
@@ -250,7 +251,7 @@ const openReconciliation = async (req, res) => {
 };
 
 const completeReconciliation = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient(); // request connection: app.tenant_id already set (RLS)
   try {
     if (!(await ready(db))) { return notReady(res); }
     const recRes = await db.query(
@@ -266,7 +267,7 @@ const completeReconciliation = async (req, res) => {
     await db.query("COMMIT");
     return res.json({ success: true, message: out.balanced ? "Reconciled and balanced" : `Difference of ${out.difference}`, data: out });
   } catch (e) { try { await db.query("ROLLBACK"); } catch (_) {} return res.status(500).json({ success: false, message: e.message }); }
-  finally { db.release(); }
+
 };
 
 // ---- summary (book vs statement) -------------------------------------------

@@ -1,4 +1,19 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
 const glPosting = require("../services/gl/postingService");
 const currency = require("../services/currency/currencyService");
@@ -110,9 +125,11 @@ async function postExpenseToGl(db, expense, userId) {
 // ---- masters ---------------------------------------------------------------
 const listCategories = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const where = req.query.all === "true" ? "" : "WHERE ec.is_active = true";
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT ec.*, a.account_code, a.account_name AS gl_account_name
          FROM expense_categories ec LEFT JOIN chart_of_accounts a ON ec.gl_account_id = a.id
         ${where} ORDER BY ec.name`);
@@ -122,10 +139,12 @@ const listCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const { name, gl_account_id } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: "Category name is required" });
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `INSERT INTO expense_categories (name, gl_account_id) VALUES ($1, $2)
        ON CONFLICT (name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, is_active = true
        RETURNING *`, [String(name).trim(), gl_account_id || null]);
@@ -135,7 +154,9 @@ const createCategory = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const id = Number(req.params.id);
     const sets = []; const params = [];
     if (req.body.name !== undefined) { params.push(String(req.body.name).trim()); sets.push(`name = $${params.length}`); }
@@ -143,7 +164,7 @@ const updateCategory = async (req, res) => {
     if (req.body.is_active !== undefined) { params.push(!!req.body.is_active); sets.push(`is_active = $${params.length}`); }
     if (!sets.length) return res.status(400).json({ success: false, message: "Nothing to update" });
     params.push(id);
-    const { rows } = await pool.query(`UPDATE expense_categories SET ${sets.join(", ")} WHERE id = $${params.length} RETURNING *`, params);
+    const { rows } = await db.query(`UPDATE expense_categories SET ${sets.join(", ")} WHERE id = $${params.length} RETURNING *`, params);
     if (!rows.length) return res.status(404).json({ success: false, message: "Category not found" });
     return res.json({ success: true, data: rows[0] });
   } catch (e) { return res.status(500).json({ success: false, message: e.message }); }
@@ -154,11 +175,13 @@ const updateCategory = async (req, res) => {
 // into one reporting currency (USD) so a multi-location category reads cleanly.
 const categoryOverview = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const id = Number(req.params.id);
     const year = Number(req.query.year) || new Date().getFullYear();
 
-    const catRes = await pool.query(
+    const catRes = await db.query(
       `SELECT ec.*, a.account_code, a.account_name AS gl_account_name
          FROM expense_categories ec LEFT JOIN chart_of_accounts a ON ec.gl_account_id = a.id
         WHERE ec.id = $1`, [id]);
@@ -173,14 +196,14 @@ const categoryOverview = async (req, res) => {
     // Totals by type + currency.
     const tParams = [id]; let tScope = "";
     if (scopeIds) { tParams.push(scopeIds); tScope = `AND e.entity_id = ANY($${tParams.length})`; }
-    const tRes = await pool.query(
+    const tRes = await db.query(
       `SELECT e.expense_type, e.currency, COUNT(*)::int AS n, SUM(e.total_amount) AS total
          FROM expenses e
         WHERE e.category_id = $1 AND e.status <> 'CANCELLED' ${tScope}
         GROUP BY e.expense_type, e.currency`, tParams);
     let fixed = 0, variable = 0, count = 0;
     for (const r of tRes.rows) {
-      const c = await convertAmount(r.total, r.currency, reporting, cache);
+      const c = await convertAmount(r.total, r.currency, reporting, cache, db);
       if (r.expense_type === "FIXED") fixed += c; else variable += c;
       count += r.n;
     }
@@ -188,14 +211,14 @@ const categoryOverview = async (req, res) => {
     // Spend by location (entity).
     const enParams = [id]; let enScope = "";
     if (scopeIds) { enParams.push(scopeIds); enScope = `AND e.entity_id = ANY($${enParams.length})`; }
-    const enRes = await pool.query(
+    const enRes = await db.query(
       `SELECT r.region_name, e.currency, SUM(e.total_amount) AS total
          FROM expenses e LEFT JOIN regions r ON e.entity_id = r.id
         WHERE e.category_id = $1 AND e.status <> 'CANCELLED' ${enScope}
         GROUP BY r.region_name, e.currency`, enParams);
     const byEntityMap = new Map();
     for (const r of enRes.rows) {
-      const c = await convertAmount(r.total, r.currency, reporting, cache);
+      const c = await convertAmount(r.total, r.currency, reporting, cache, db);
       const name = r.region_name || "Unassigned";
       byEntityMap.set(name, (byEntityMap.get(name) || 0) + c);
     }
@@ -204,7 +227,7 @@ const categoryOverview = async (req, res) => {
     // Monthly trend for the year.
     const mParams = [id, year]; let mScope = "";
     if (scopeIds) { mParams.push(scopeIds); mScope = `AND e.entity_id = ANY($${mParams.length})`; }
-    const mRes = await pool.query(
+    const mRes = await db.query(
       `SELECT EXTRACT(MONTH FROM e.expense_date)::int AS month, e.currency, SUM(e.total_amount) AS total
          FROM expenses e
         WHERE e.category_id = $1 AND e.status <> 'CANCELLED' AND EXTRACT(YEAR FROM e.expense_date) = $2 ${mScope}
@@ -212,14 +235,14 @@ const categoryOverview = async (req, res) => {
     const months = Array(12).fill(0);
     for (const r of mRes.rows) {
       const idx = Number(r.month) - 1;
-      if (idx >= 0 && idx < 12) months[idx] += await convertAmount(r.total, r.currency, reporting, cache);
+      if (idx >= 0 && idx < 12) months[idx] += await convertAmount(r.total, r.currency, reporting, cache, db);
     }
     const byMonth = months.map((v, i) => ({ month: i + 1, total: round2(v) }));
 
     // Recent expenses for this category.
     const rParams = [id]; let rScope = "";
     if (scopeIds) { rParams.push(scopeIds); rScope = `AND e.entity_id = ANY($${rParams.length})`; }
-    const recentRes = await pool.query(
+    const recentRes = await db.query(
       `SELECT e.id, e.expense_date, e.description, e.vendor_name, e.paid_by, e.is_reimbursable,
               e.currency, e.amount, e.gst_amount, e.tds_amount, e.total_amount, e.expense_type, e.status,
               r.region_name AS entity_name, pm.name AS payment_method_name
@@ -239,8 +262,10 @@ const categoryOverview = async (req, res) => {
 
 const listPaymentMethods = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
-    const { rows } = await pool.query(
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
+    const { rows } = await db.query(
       `SELECT pm.*, a.account_code FROM payment_methods pm
          LEFT JOIN chart_of_accounts a ON pm.gl_account_id = a.id
         WHERE pm.is_active = true ORDER BY pm.name`);
@@ -250,10 +275,12 @@ const listPaymentMethods = async (req, res) => {
 
 const createPaymentMethod = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const { name, gl_account_id, method_type } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: "Payment method name is required" });
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `INSERT INTO payment_methods (name, method_type, gl_account_id) VALUES ($1, $2, $3)
        ON CONFLICT (name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, method_type = EXCLUDED.method_type, is_active = true
        RETURNING *`,
@@ -265,7 +292,9 @@ const createPaymentMethod = async (req, res) => {
 // ---- expenses register -----------------------------------------------------
 const listExpenses = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const { entityId, categoryId, status, from, to, type, reimbursable, search } = req.query;
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(200, Number(req.query.limit) || 50);
@@ -289,15 +318,15 @@ const listExpenses = async (req, res) => {
 
     // Count + a currency-bucketed grand total over the WHOLE filtered set (not
     // just the current page), so the footer reflects reality across pages.
-    const count = await pool.query(`SELECT COUNT(*) FROM expenses e ${whereSql}`, params);
-    const totalsRes = await pool.query(`SELECT e.currency, SUM(e.total_amount) AS total FROM expenses e ${whereSql} GROUP BY e.currency`, params);
-    const reportingCurrency = await reportingCurrencyFor(req);
+    const count = await db.query(`SELECT COUNT(*) FROM expenses e ${whereSql}`, params);
+    const totalsRes = await db.query(`SELECT e.currency, SUM(e.total_amount) AS total FROM expenses e ${whereSql} GROUP BY e.currency`, params);
+    const reportingCurrency = await reportingCurrencyFor(req, db);
     const rateCache = new Map();
     let grandTotal = 0;
-    for (const t of totalsRes.rows) grandTotal += await convertAmount(t.total, t.currency, reportingCurrency, rateCache);
+    for (const t of totalsRes.rows) grandTotal += await convertAmount(t.total, t.currency, reportingCurrency, rateCache, db);
 
     params.push(limit); params.push((page - 1) * limit);
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT e.*, ec.name AS category_name, pm.name AS payment_method_name, r.region_name AS entity_name
          FROM expenses e
          LEFT JOIN expense_categories ec ON e.category_id = ec.id
@@ -309,7 +338,7 @@ const listExpenses = async (req, res) => {
     // Per-row reporting-currency amount so cross-region charts/aggregations never
     // raw-sum mixed native currencies (single region → same currency, 1:1).
     for (const row of rows) {
-      row.total_amount_reporting = await convertAmount(row.total_amount, row.currency, reportingCurrency, rateCache);
+      row.total_amount_reporting = await convertAmount(row.total_amount, row.currency, reportingCurrency, rateCache, db);
     }
     return res.json({
       success: true, ready: true, data: rows,
@@ -324,7 +353,9 @@ const listExpenses = async (req, res) => {
 // pagination — the whole filtered set, plus a consolidated USD total column.
 const exportExpenses = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const { entityId, categoryId, status, from, to, type, reimbursable, search } = req.query;
     const params = []; const where = [];
     if (entityId) { params.push(Number(entityId)); where.push(`e.entity_id = $${params.length}`); }
@@ -343,7 +374,7 @@ const exportExpenses = async (req, res) => {
     }
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT e.*, ec.name AS category_name, pm.name AS payment_method_name, r.region_name AS entity_name
          FROM expenses e
          LEFT JOIN expense_categories ec ON e.category_id = ec.id
@@ -356,7 +387,7 @@ const exportExpenses = async (req, res) => {
     let totalUsd = 0;
     const outRows = [];
     for (const r of rows) {
-      const usd = await convertAmount(r.total_amount, r.currency, "USD", cache);
+      const usd = await convertAmount(r.total_amount, r.currency, "USD", cache, db);
       totalUsd += usd;
       outRows.push({
         expense_date: String(r.expense_date).slice(0, 10),
@@ -402,7 +433,8 @@ const exportExpenses = async (req, res) => {
 };
 
 const createExpense = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database client is not available");
   try {
     if (!(await ready(db))) return notReady(res);
     const b = req.body;
@@ -424,11 +456,12 @@ const createExpense = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 const reimburseExpense = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database client is not available");
   try {
     if (!(await ready(db))) return notReady(res);
     const id = Number(req.params.id);
@@ -456,13 +489,14 @@ const reimburseExpense = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 // Edit an expense. Amounts/accounts may change, so the prior GL entry is
 // reversed and a fresh one posted — keeping the ledger balanced and audit-clean.
 const updateExpense = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database client is not available");
   try {
     if (!(await ready(db))) return notReady(res);
     const id = Number(req.params.id);
@@ -513,13 +547,14 @@ const updateExpense = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 // Delete an expense. Any GL entry it posted is reversed first so the ledger
 // stays balanced; the immutable posted+reversal pair remains for audit.
 const deleteExpense = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database client is not available");
   try {
     if (!(await ready(db))) return notReady(res);
     const id = Number(req.params.id);
@@ -540,14 +575,16 @@ const deleteExpense = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 // ---- recurring -------------------------------------------------------------
 const listRecurring = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
-    const { rows } = await pool.query(
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
+    const { rows } = await db.query(
       `SELECT re.*, ec.name AS category_name, r.region_name AS entity_name
          FROM recurring_expenses re
          LEFT JOIN expense_categories ec ON re.category_id = ec.id
@@ -559,14 +596,16 @@ const listRecurring = async (req, res) => {
 
 const createRecurring = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const b = req.body;
     const actual = round2(b.actual_cost);
     const gstPct = num(b.gst_percent); const tdsPct = num(b.tds_percent);
     const amount = round2(actual + actual * gstPct / 100 - actual * tdsPct / 100);
     const period = Math.max(1, Number(b.period_months) || 1);
     const monthly = round2(amount / period);
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `INSERT INTO recurring_expenses
         (entity_id, name, category_id, vendor_id, vendor_name, payment_method_id, currency,
          actual_cost, gst_percent, tds_percent, amount, period_months, monthly_equiv, start_month, end_month, is_active, notes, created_by)
@@ -580,7 +619,8 @@ const createRecurring = async (req, res) => {
 
 // Generate the selected month's expenses from active recurring templates (idempotent).
 const runRecurring = async (req, res) => {
-  const db = await pool.connect();
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database client is not available");
   try {
     if (!(await ready(db))) return notReady(res);
     const monthStart = req.body.month ? new Date(req.body.month) : new Date();
@@ -609,18 +649,20 @@ const runRecurring = async (req, res) => {
   } catch (e) {
     try { await db.query("ROLLBACK"); } catch (_) {}
     return res.status(500).json({ success: false, message: e.message });
-  } finally { db.release(); }
+  }
 };
 
 // How many of the active templates due in a given month have already been
 // generated into the expenses register. Powers the "generated?" indicator.
 const recurringStatus = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const monthStart = req.query.month ? new Date(req.query.month) : new Date();
     monthStart.setDate(1);
     const mDate = monthStart.toISOString().slice(0, 10);
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT
          COUNT(*) FILTER (WHERE re.is_active AND re.start_month <= $1 AND (re.end_month IS NULL OR re.end_month >= $1))::int AS due,
          COUNT(*) FILTER (WHERE re.is_active AND re.start_month <= $1 AND (re.end_month IS NULL OR re.end_month >= $1)
@@ -636,27 +678,29 @@ const recurringStatus = async (req, res) => {
 // ---- reports ---------------------------------------------------------------
 const reportByCategory = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const year = Number(req.query.year) || new Date().getFullYear();
     const params = [year]; let entityFilter = "";
     if (req.query.entityId) { params.push(Number(req.query.entityId)); entityFilter = `AND e.entity_id = $${params.length}`; }
     // Group by currency too, then fold per-currency buckets into the reporting
     // currency so a multi-entity matrix doesn't add ₹ + $ + € into one cell.
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT ec.name AS category, EXTRACT(MONTH FROM e.expense_date)::int AS month, e.currency, SUM(e.total_amount) AS total
          FROM expenses e LEFT JOIN expense_categories ec ON e.category_id = ec.id
         WHERE EXTRACT(YEAR FROM e.expense_date) = $1 AND e.status <> 'CANCELLED' ${entityFilter}
         GROUP BY ec.name, EXTRACT(MONTH FROM e.expense_date), e.currency`, params);
-    const reportingCurrency = await reportingCurrencyFor(req);
+    const reportingCurrency = await reportingCurrencyFor(req, db);
     const cache = new Map();
     const agg = new Map();
     for (const r of rows) {
-      const conv = await convertAmount(r.total, r.currency, reportingCurrency, cache);
-      const key = `${r.category ?? "Uncategorised"} ${r.month}`;
+      const conv = await convertAmount(r.total, r.currency, reportingCurrency, cache, db);
+      const key = `${r.category ?? "Uncategorised"}${r.month}`;
       agg.set(key, (agg.get(key) || 0) + conv);
     }
     const data = [...agg.entries()].map(([key, total]) => {
-      const [category, month] = key.split(" ");
+      const [category, month] = key.split("");
       return { category, month: Number(month), total: round2(total) };
     }).sort((a, b) => String(a.category).localeCompare(String(b.category)));
     return res.json({ success: true, ready: true, year, currency: reportingCurrency, data });
@@ -665,21 +709,23 @@ const reportByCategory = async (req, res) => {
 
 const reportSummary = async (req, res) => {
   try {
-    if (!(await ready())) return notReady(res);
+    const db = getTenantClient();
+    if (!db) throw new Error("Tenant database client is not available");
+    if (!(await ready(db))) return notReady(res);
     const params = []; const where = ["status <> 'CANCELLED'"];
     if (req.query.entityId) { params.push(Number(req.query.entityId)); where.push(`entity_id = $${params.length}`); }
     if (req.query.from) { params.push(req.query.from); where.push(`expense_date >= $${params.length}`); }
     if (req.query.to) { params.push(req.query.to); where.push(`expense_date <= $${params.length}`); }
     // Bucket by type AND currency, then fold into the reporting currency so the
     // all-entities totals don't sum mixed currencies.
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT expense_type, currency, COUNT(*)::int AS count, SUM(total_amount) AS total
          FROM expenses WHERE ${where.join(" AND ")} GROUP BY expense_type, currency`, params);
-    const reportingCurrency = await reportingCurrencyFor(req);
+    const reportingCurrency = await reportingCurrencyFor(req, db);
     const cache = new Map();
     let fixed = 0, variable = 0, fixedCount = 0, variableCount = 0;
     for (const r of rows) {
-      const conv = await convertAmount(r.total, r.currency, reportingCurrency, cache);
+      const conv = await convertAmount(r.total, r.currency, reportingCurrency, cache, db);
       if (r.expense_type === "FIXED") { fixed += conv; fixedCount += r.count; }
       else { variable += conv; variableCount += r.count; }
     }
@@ -694,3 +740,8 @@ module.exports = {
   listCategories, createCategory, updateCategory, categoryOverview, listPaymentMethods, createPaymentMethod, listExpenses, exportExpenses, createExpense, updateExpense, deleteExpense, reimburseExpense,
   listRecurring, createRecurring, runRecurring, recurringStatus, reportByCategory, reportSummary,
 };
+
+
+
+
+

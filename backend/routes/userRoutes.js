@@ -1,36 +1,44 @@
+
 const express = require("express");
 const router = express.Router();
 
 const userController = require("../controllers/userController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
-// Reading the user list is permission-gated (so a custom role can be granted it);
-// creating/updating/deleting users stays a hard SUPER_ADMIN floor below.
+// Get all users
 router.get(
   "/",
   authenticate,
+  tenantMiddleware,
   permit("users", "SUPER_ADMIN", "ADMIN"),
   userController.getAllUsers,
 );
 
+// Create user
 router.post(
   "/",
   authenticate,
+  tenantMiddleware,
   authorize("SUPER_ADMIN"),
   userController.createUser,
 );
 
+// Update user
 router.put(
   "/:id",
   authenticate,
+  tenantMiddleware,
   authorize("SUPER_ADMIN"),
   userController.updateUser,
 );
 
+// Delete user
 router.delete(
   "/:id",
   authenticate,
+  tenantMiddleware,
   authorize("SUPER_ADMIN"),
   userController.deleteUser,
 );

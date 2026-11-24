@@ -1,102 +1,105 @@
+
 const express = require("express");
 const router = express.Router();
 
 const invoiceController = require("../controllers/invoiceController");
 const emailController = require("../controllers/emailController");
+
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every invoice route.
-router.use(authenticate, scopeAccess);
+// Authentication, tenant isolation, and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
+// Get all invoices
 router.get(
   "/",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.getAllInvoices,
 );
 
+// Export invoices
 router.get(
   "/export",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.exportInvoices,
 );
 
+// Get placement options
 router.get(
   "/placement-options",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.getInvoicePlacementOptions,
 );
 
+// Preview next invoice number
 router.get(
   "/next-number-preview",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.getNextInvoiceNumberPreview,
 );
 
+// Get invoice print data
 router.get(
   "/:id/print",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.getInvoicePrintData,
 );
 
+// Download invoice PDF
 router.get(
   "/:id/pdf",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.downloadInvoicePdf,
 );
 
+// Get invoice by ID
 router.get(
   "/:id",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.getInvoiceById,
 );
 
+// Send invoice email
 router.post(
   "/:id/send-email",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   emailController.sendInvoiceEmail,
 );
 
+// Get invoice email history
 router.get(
   "/:id/email-history",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   emailController.invoiceEmailHistory,
 );
 
+// Create invoice
 router.post(
   "/",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.createInvoice,
 );
 
+// Update invoice
 router.put(
   "/:id",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.updateInvoice,
 );
 
+// Update invoice status
 router.patch(
   "/:id/status",
-  authenticate,
   permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.updateInvoiceStatus,
 );
 
+// Delete invoice
 router.delete(
   "/:id",
-  authenticate,
   authorize("SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"),
   invoiceController.deleteInvoice,
 );

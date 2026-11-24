@@ -1,16 +1,21 @@
+
 const express = require("express");
 const multer = require("multer");
 const bank = require("../controllers/bankController");
 const { authenticate } = require("../middleware/authMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const router = express.Router();
 
 // Statement files are parsed in-memory (no disk persistence). 10 MB cap.
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
-// Row-level RBAC on every banking request.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 // Bank accounts
 router.get("/accounts", bank.listAccounts);

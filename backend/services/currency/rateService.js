@@ -12,6 +12,7 @@
 // =============================================================================
 
 const pool = require("../../config/db");
+const { getTenantId } = require("../../config/tenantContext");
 
 // Fallback set if the DB can't be read. Normally the live currency set is
 // derived from the data (group currency + every region's functional currency)
@@ -21,16 +22,44 @@ const CURRENCIES = ["USD", "GBP", "INR", "EUR"];
 // The currencies that actually need rates: the group/reporting currency plus
 // every functional currency in use across regions. Deriving this from the data
 // prevents the "added a region but forgot to fetch its rate" gap.
+// company_settings / regions have forced row-level security, so with no tenant
+// set they look empty. Exchange rates are shared, so when called outside a
+// tenant (rateScheduler, CLI) collect the currencies of EVERY tenant.
+const CURRENCIES_SQL =
+  `SELECT DISTINCT code FROM (
+     SELECT group_currency AS code FROM company_settings
+     UNION ALL
+     SELECT COALESCE(functional_currency, default_currency) AS code FROM regions
+   ) s WHERE code IS NOT NULL AND code <> ''`;
+
+async function currenciesForAllTenants() {
+  const { rows: tenants } = await pool.query("SELECT id FROM tenants ORDER BY id");
+  const codes = [];
+  for (const { id } of tenants) {
+    const client = await pool.connect();
+    let releaseErr;
+    try {
+      await client.query("SELECT set_config('app.tenant_id', $1, false)", [String(id)]);
+      const { rows } = await client.query(CURRENCIES_SQL);
+      codes.push(...rows.map((r) => r.code));
+    } finally {
+      try {
+        await client.query("SELECT set_config('app.tenant_id', '', false)");
+      } catch (err) {
+        releaseErr = err;
+      }
+      client.release(releaseErr);
+    }
+  }
+  return codes;
+}
+
 async function currenciesInUse(db = pool) {
   try {
-    const { rows } = await db.query(
-      `SELECT DISTINCT code FROM (
-         SELECT group_currency AS code FROM company_settings WHERE id = 1
-         UNION ALL
-         SELECT COALESCE(functional_currency, default_currency) AS code FROM regions
-       ) s WHERE code IS NOT NULL AND code <> ''`,
-    );
-    const set = [...new Set(rows.map((r) => normalizeCode(r.code)).filter(Boolean))];
+    const codes = db === pool && !getTenantId()
+      ? await currenciesForAllTenants()
+      : (await db.query(CURRENCIES_SQL)).rows.map((r) => r.code);
+    const set = [...new Set(codes.map(normalizeCode).filter(Boolean))];
     return set.length ? set : CURRENCIES;
   } catch {
     return CURRENCIES;
@@ -125,7 +154,7 @@ async function upsertRate(from, to, rate, rateDate, source, db = pool) {
   );
 }
 
-module.exports = { fetchDailyRates, setManualRate, CURRENCIES };
+module.exports = { fetchDailyRates, setManualRate, currenciesInUse, CURRENCIES };
 
 // --- Run directly for a one-off / cron invocation: `node rateService.js` -----
 if (require.main === module) {

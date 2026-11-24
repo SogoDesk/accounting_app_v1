@@ -1,13 +1,15 @@
+
 const express = require("express");
 const billController = require("../controllers/billController");
 const { authenticate, authorize } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const router = express.Router();
 
-// Attach row-level RBAC scope (req.allowedEntityIds) to every bill route.
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/", authenticate, permit("bills", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"), billController.getAllBills);
 router.get("/export", authenticate, permit("bills", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN"), billController.exportBills);

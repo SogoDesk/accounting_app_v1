@@ -75,6 +75,7 @@ const STATUS_MAP = {
   HOURLY: 'badge-blue', MONTHLY: 'badge-cyan', ONE_TIME: 'badge-yellow',
   CONTRACT: 'badge-blue', W2: 'badge-green', C2C: 'badge-yellow',
   FULL_TIME: 'badge-green', PERMANENT: 'badge-cyan',
+  SUSPENDED: 'badge-red', EXPIRED: 'badge-red', ACCEPTED: 'badge-green',
 }
 
 export function Badge({ value }) {

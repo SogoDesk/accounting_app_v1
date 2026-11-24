@@ -1,31 +1,39 @@
+
+
+
 const fs = require("fs");
 const path = require("path");
-const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const { ensureAttachmentsSchema } = require("../modules/attachments/ensureAttachmentsSchema");
 const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
 const { STORAGE_DIR } = require("../middleware/uploadDocument");
 
-// Supported parent records. `scoped: false` = region-agnostic record (candidates)
-// gated only by route authentication, not row-level region scope.
+const getTenantDb = () => {
+  const db = getTenantClient();
+  if (!db) throw new Error("Tenant database connection not found.");
+  return db;
+};
+
+// Supported parent records. Candidates are region-agnostic but still tenant-scoped.
 const ENTITY_CONFIG = {
   invoice: { table: "invoices", scoped: true },
   bill: { table: "bills", scoped: true },
   placement: { table: "placements", scoped: true },
   candidate: { table: "candidates", scoped: false },
-  // Timesheets scope through their placement's region (resolved via join below).
   timesheet: { table: "timesheets", scoped: true, regionVia: "placement" },
 };
 
-// Load the parent record and confirm it exists (returns region_id for scoped types).
-const loadParent = async (entityType, entityId) => {
+const loadParent = async (db, entityType, entityId) => {
   const cfg = ENTITY_CONFIG[entityType];
   if (!cfg) return { error: "Invalid attachment type", status: 400 };
+
   if (entityType === "bill") {
-    try { await ensureApSchema(); } catch (_e) { /* table may already exist */ }
+    await ensureApSchema(db);
   }
+
   if (cfg.regionVia === "placement") {
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT t.id, p.region_id
          FROM ${cfg.table} t JOIN placements p ON t.placement_id = p.id
         WHERE t.id = $1`,
@@ -34,8 +42,9 @@ const loadParent = async (entityType, entityId) => {
     if (!rows.length) return { error: "Record not found", status: 404 };
     return { parent: rows[0] };
   }
+
   const cols = cfg.scoped === false ? "id" : "id, region_id";
-  const { rows } = await pool.query(
+  const { rows } = await db.query(
     `SELECT ${cols} FROM ${cfg.table} WHERE id = $1`,
     [Number(entityId)],
   );
@@ -43,11 +52,9 @@ const loadParent = async (entityType, entityId) => {
   return { parent: rows[0] };
 };
 
-// Duplicate a record's attachments onto another record, copying the underlying
-// files on disk so deleting one side never orphans the other. Used when an
-// invoice is generated from a timesheet (carry the client-approved proof over).
+// Copies attachments inside the active tenant database context.
 const copyAttachments = async (db, fromType, fromId, toType, toId) => {
-  await ensureAttachmentsSchema();
+  await ensureAttachmentsSchema(db);
   const { rows } = await db.query(
     `SELECT file_name, stored_name, mime_type, file_size, uploaded_by
        FROM attachments WHERE entity_type = $1 AND entity_id = $2`,
@@ -64,7 +71,9 @@ const copyAttachments = async (db, fromType, fromId, toType, toId) => {
       try {
         fs.copyFileSync(src, destPath);
         storedName = candidate;
-      } catch (_e) { /* fall back to sharing the original file */ }
+      } catch (_e) {
+        // Fall back to sharing the original file.
+      }
     }
     await db.query(
       `INSERT INTO attachments
@@ -77,25 +86,24 @@ const copyAttachments = async (db, fromType, fromId, toType, toId) => {
   return copied;
 };
 
-// Row-level RBAC: restrict to the caller's allowed entities (regions).
-// Region-agnostic records (region_id absent, e.g. candidates) are allowed —
-// the route's authentication already gates access.
 const allowedForCaller = (req, parent) => {
   if (parent.region_id == null) return true;
   return !req.scopeEnforced || canActOnEntity(req, parent.region_id);
 };
 
 const safeStoredPath = (storedName) => {
-  const filePath = path.join(STORAGE_DIR, path.basename(String(storedName || "")));
-  return filePath.startsWith(STORAGE_DIR) ? filePath : null;
+  const baseDir = path.resolve(STORAGE_DIR);
+  const filePath = path.resolve(baseDir, path.basename(String(storedName || "")));
+  return filePath.startsWith(`${baseDir}${path.sep}`) ? filePath : null;
 };
 
-// POST /api/attachments/:entityType/:entityId  (multipart, field "files")
+// POST /api/attachments/:entityType/:entityId
 const uploadAttachments = async (req, res) => {
   try {
-    await ensureAttachmentsSchema();
+    const db = getTenantDb();
+    await ensureAttachmentsSchema(db);
     const { entityType, entityId } = req.params;
-    const { parent, error, status } = await loadParent(entityType, entityId);
+    const { parent, error, status } = await loadParent(db, entityType, entityId);
     if (error) return res.status(status).json({ success: false, message: error });
     if (!allowedForCaller(req, parent)) {
       return res.status(403).json({ success: false, message: "Not permitted for this record" });
@@ -106,7 +114,7 @@ const uploadAttachments = async (req, res) => {
 
     const inserted = [];
     for (const f of files) {
-      const { rows } = await pool.query(
+      const { rows } = await db.query(
         `INSERT INTO attachments
            (entity_type, entity_id, file_name, stored_name, mime_type, file_size, uploaded_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -124,14 +132,15 @@ const uploadAttachments = async (req, res) => {
 // GET /api/attachments/:entityType/:entityId
 const listAttachments = async (req, res) => {
   try {
-    await ensureAttachmentsSchema();
+    const db = getTenantDb();
+    await ensureAttachmentsSchema(db);
     const { entityType, entityId } = req.params;
-    const { parent, error, status } = await loadParent(entityType, entityId);
+    const { parent, error, status } = await loadParent(db, entityType, entityId);
     if (error) return res.status(status).json({ success: false, message: error });
     if (!allowedForCaller(req, parent)) {
       return res.status(403).json({ success: false, message: "Not permitted for this record" });
     }
-    const { rows } = await pool.query(
+    const { rows } = await db.query(
       `SELECT id, entity_type, entity_id, file_name, mime_type, file_size, created_at
          FROM attachments
         WHERE entity_type = $1 AND entity_id = $2
@@ -144,16 +153,17 @@ const listAttachments = async (req, res) => {
   }
 };
 
-// GET /api/attachments/file/:id  (authenticated stream/download)
+// GET /api/attachments/file/:id
 const downloadAttachment = async (req, res) => {
   try {
-    await ensureAttachmentsSchema();
-    const { rows } = await pool.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
+    const db = getTenantDb();
+    await ensureAttachmentsSchema(db);
+    const { rows } = await db.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
     if (!rows.length) return res.status(404).json({ success: false, message: "Attachment not found" });
     const att = rows[0];
 
-    const { parent, error } = await loadParent(att.entity_type, att.entity_id);
-    if (error) return res.status(404).json({ success: false, message: "Parent record not found" });
+    const { parent, error, status } = await loadParent(db, att.entity_type, att.entity_id);
+    if (error) return res.status(status || 404).json({ success: false, message: "Parent record not found" });
     if (!allowedForCaller(req, parent)) {
       return res.status(403).json({ success: false, message: "Not permitted for this record" });
     }
@@ -173,17 +183,20 @@ const downloadAttachment = async (req, res) => {
 // DELETE /api/attachments/:id
 const deleteAttachment = async (req, res) => {
   try {
-    await ensureAttachmentsSchema();
-    const { rows } = await pool.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
+    const db = getTenantDb();
+    await ensureAttachmentsSchema(db);
+    const { rows } = await db.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
     if (!rows.length) return res.status(404).json({ success: false, message: "Attachment not found" });
     const att = rows[0];
 
-    const { parent, error } = await loadParent(att.entity_type, att.entity_id);
-    if (!error && !allowedForCaller(req, parent)) {
+    const { parent, error } = await loadParent(db, att.entity_type, att.entity_id);
+    // Fail closed: do not delete an attachment if its parent cannot be verified.
+    if (error) return res.status(404).json({ success: false, message: "Parent record not found" });
+    if (!allowedForCaller(req, parent)) {
       return res.status(403).json({ success: false, message: "Not permitted for this record" });
     }
 
-    await pool.query(`DELETE FROM attachments WHERE id = $1`, [att.id]);
+    await db.query(`DELETE FROM attachments WHERE id = $1`, [att.id]);
     const filePath = safeStoredPath(att.stored_name);
     if (filePath && fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (_e) { /* best effort */ }
@@ -195,3 +208,7 @@ const deleteAttachment = async (req, res) => {
 };
 
 module.exports = { uploadAttachments, listAttachments, downloadAttachment, deleteAttachment, copyAttachments };
+
+
+
+

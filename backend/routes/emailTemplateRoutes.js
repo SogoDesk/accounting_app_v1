@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -7,19 +8,23 @@ const { authenticate } = require("../middleware/authMiddleware");
 const { permit } = require("../middleware/permissionMiddleware");
 const { scopeAccess } = require("../middleware/scopeMiddleware");
 const uploadEmailAsset = require("../middleware/uploadEmailAsset");
+const tenantMiddleware = require("../middleware/tenantMiddleware");
 
 const guard = permit("invoices", "SUPER_ADMIN", "ADMIN", "FINANCE_ADMIN");
 
 const uploadOne = (req, res, next) =>
   uploadEmailAsset.single("file")(req, res, (err) => {
     if (!err) return next();
+
     const message = err.code === "LIMIT_FILE_SIZE"
       ? "Image must be 4MB or smaller"
       : err.message || "Upload failed";
+
     return res.status(400).json({ success: false, message });
   });
 
-router.use(authenticate, scopeAccess);
+// Tenant isolation and row-level access
+router.use(authenticate, tenantMiddleware, scopeAccess);
 
 router.get("/", guard, c.listTemplates);
 router.get("/preview-invoices", guard, c.previewInvoiceOptions);

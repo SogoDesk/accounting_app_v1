@@ -1,4 +1,12 @@
+
+
+
+
+
+
+
 const pool = require("../config/db");
+const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
 const { generateInvoicePdf } = require("../utils/invoicePdfGenerator");
 const {
@@ -1922,7 +1930,13 @@ const validateClientLineItems = async (db, lineItems = []) => {
 };
 
 const createInvoice = async (req, res) => {
-  const client = await pool.connect();
+  const client = getTenantClient();
+  if (!client) {
+    return res.status(500).json({
+      success: false,
+      message: "Tenant database connection not found.",
+    });
+  }
 
   try {
     const {
@@ -2269,12 +2283,18 @@ const createInvoice = async (req, res) => {
       error: error.message,
     });
   } finally {
-    client.release();
+    // tenantMiddleware owns and releases the tenant database connection.
   }
 };
 
 const updateInvoice = async (req, res) => {
-  const client = await pool.connect();
+  const client = getTenantClient();
+  if (!client) {
+    return res.status(500).json({
+      success: false,
+      message: "Tenant database connection not found.",
+    });
+  }
 
   try {
     const { id } = req.params;
@@ -2614,7 +2634,7 @@ const updateInvoice = async (req, res) => {
       error: error.message,
     });
   } finally {
-    client.release();
+    // tenantMiddleware owns and releases the tenant database connection.
   }
 };
 
@@ -2691,7 +2711,13 @@ const createInvoiceStatusPayment = async (
 };
 
 const updateInvoiceStatus = async (req, res) => {
-  const client = await pool.connect();
+  const client = getTenantClient();
+  if (!client) {
+    return res.status(500).json({
+      success: false,
+      message: "Tenant database connection not found.",
+    });
+  }
 
   try {
     const { id } = req.params;
@@ -2976,12 +3002,18 @@ const updateInvoiceStatus = async (req, res) => {
       error: error.message,
     });
   } finally {
-    client.release();
+    // tenantMiddleware owns and releases the tenant database connection.
   }
 };
 
 const deleteInvoice = async (req, res) => {
-  const client = await pool.connect();
+  const client = getTenantClient();
+  if (!client) {
+    return res.status(500).json({
+      success: false,
+      message: "Tenant database connection not found.",
+    });
+  }
 
   try {
     const { id } = req.params;
@@ -3052,7 +3084,7 @@ const deleteInvoice = async (req, res) => {
       error: error.message,
     });
   } finally {
-    client.release();
+    // tenantMiddleware owns and releases the tenant database connection.
   }
 };
 
@@ -3169,3 +3201,7 @@ module.exports = {
   validateInvoiceLineItems,
   normalizeInvoiceType,
 };
+
+
+
+

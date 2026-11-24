@@ -1,7 +1,18 @@
-const pool = require("../config/db");
+
+const { getTenantClient } = require("../config/tenantContext");
 
 const getAuditLogs = async (req, res) => {
   try {
+    // Get the database connection for the current tenant.
+    const db = getTenantClient();
+
+    if (!db) {
+      return res.status(401).json({
+        success: false,
+        message: "Tenant database connection not found.",
+      });
+    }
+
     const {
       entity_type,
       entity_id,
@@ -10,6 +21,11 @@ const getAuditLogs = async (req, res) => {
       page = 1,
       limit = 50,
     } = req.query;
+
+    const currentPage = Math.max(1, Number(page) || 1);
+    const pageLimit = Math.min(100, Math.max(1, Number(limit) || 50));
+    const offset = (currentPage - 1) * pageLimit;
+
     const conditions = [];
     const values = [];
     let idx = 1;
@@ -34,37 +50,45 @@ const getAuditLogs = async (req, res) => {
       values.push(action);
     }
 
-    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const offset = (Number(page) - 1) * Number(limit);
+    const where = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
 
-    const count = await pool.query(
+    // RLS automatically restricts these queries to the current tenant.
+    const count = await db.query(
       `SELECT COUNT(*) FROM audit_logs ${where}`,
-      values,
+      values
     );
 
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT *
        FROM audit_logs
        ${where}
        ORDER BY created_at DESC
        LIMIT $${idx++} OFFSET $${idx}`,
-      [...values, Number(limit), offset],
+      [...values, pageLimit, offset]
     );
+
+    const total = Number(count.rows[0].count);
 
     return res.json({
       success: true,
       data: result.rows,
       pagination: {
-        total: Number(count.rows[0].count),
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(Number(count.rows[0].count) / Number(limit)),
+        total,
+        page: currentPage,
+        limit: pageLimit,
+        pages: Math.ceil(total / pageLimit),
       },
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error", error: err.message });
+    console.error("Get audit logs error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
