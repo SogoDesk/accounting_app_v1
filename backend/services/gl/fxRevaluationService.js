@@ -190,7 +190,7 @@ async function revalue(params) {
            (entity_id, as_of_date, account_id, currency, book_base,
             revalued_base, gain_loss, entry_id, reversal_entry_id, reversed)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true)
-         ON CONFLICT (entity_id, as_of_date, account_id, currency)
+         ON CONFLICT (tenant_id, entity_id, as_of_date, account_id, currency)
          DO NOTHING`,
         [
           entityId,

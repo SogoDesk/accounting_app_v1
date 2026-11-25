@@ -4,8 +4,6 @@
 const fs = require("fs");
 const path = require("path");
 const { getTenantClient } = require("../config/tenantContext");
-const { ensureAttachmentsSchema } = require("../modules/attachments/ensureAttachmentsSchema");
-const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
 const { STORAGE_DIR } = require("../middleware/uploadDocument");
 
@@ -29,7 +27,6 @@ const loadParent = async (db, entityType, entityId) => {
   if (!cfg) return { error: "Invalid attachment type", status: 400 };
 
   if (entityType === "bill") {
-    await ensureApSchema(db);
   }
 
   if (cfg.regionVia === "placement") {
@@ -54,7 +51,6 @@ const loadParent = async (db, entityType, entityId) => {
 
 // Copies attachments inside the active tenant database context.
 const copyAttachments = async (db, fromType, fromId, toType, toId) => {
-  await ensureAttachmentsSchema(db);
   const { rows } = await db.query(
     `SELECT file_name, stored_name, mime_type, file_size, uploaded_by
        FROM attachments WHERE entity_type = $1 AND entity_id = $2`,
@@ -101,7 +97,6 @@ const safeStoredPath = (storedName) => {
 const uploadAttachments = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureAttachmentsSchema(db);
     const { entityType, entityId } = req.params;
     const { parent, error, status } = await loadParent(db, entityType, entityId);
     if (error) return res.status(status).json({ success: false, message: error });
@@ -133,7 +128,6 @@ const uploadAttachments = async (req, res) => {
 const listAttachments = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureAttachmentsSchema(db);
     const { entityType, entityId } = req.params;
     const { parent, error, status } = await loadParent(db, entityType, entityId);
     if (error) return res.status(status).json({ success: false, message: error });
@@ -157,7 +151,6 @@ const listAttachments = async (req, res) => {
 const downloadAttachment = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureAttachmentsSchema(db);
     const { rows } = await db.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
     if (!rows.length) return res.status(404).json({ success: false, message: "Attachment not found" });
     const att = rows[0];
@@ -184,7 +177,6 @@ const downloadAttachment = async (req, res) => {
 const deleteAttachment = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureAttachmentsSchema(db);
     const { rows } = await db.query(`SELECT * FROM attachments WHERE id = $1`, [Number(req.params.id)]);
     if (!rows.length) return res.status(404).json({ success: false, message: "Attachment not found" });
     const att = rows[0];

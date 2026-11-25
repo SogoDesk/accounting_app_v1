@@ -1,0 +1,513 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create a part payment with TDS 1`] = `
+{
+  "data": {
+    "invoices": [
+      {
+        "amount_base": "11800.00",
+        "balance_outstanding": "6300.00",
+        "bill_rate": "1000.00",
+        "bill_to_region_id": null,
+        "billing_period_end": null,
+        "billing_period_start": null,
+        "client_id": 1,
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "due_date": "2026-04-14T00:00:00.000Z",
+        "exchange_rate": "1.00000000",
+        "hours_or_units": "10.00",
+        "id": 1,
+        "invoice_date": "2026-03-15T00:00:00.000Z",
+        "invoice_number": "INV-P-0001",
+        "invoice_status": "PARTIALLY_PAID",
+        "invoice_template": "CLASSIC",
+        "invoice_template_id": null,
+        "invoice_template_name": null,
+        "invoice_template_snapshot_json": {},
+        "invoice_type": "CLIENT",
+        "notes": null,
+        "payment_received_amount": "5500.00",
+        "placement_id": 1,
+        "quickbooks_invoice_id": null,
+        "quickbooks_sync_status": "NOT_SYNCED",
+        "region_id": 1,
+        "sent_at": null,
+        "subtotal": "10000.00",
+        "tax_amount": "1800.00",
+        "tax_lines_json": [
+          {
+            "id": 1,
+            "sort_order": 1,
+            "tax_amount": 1800,
+            "tax_name": "GST",
+            "tax_percent": 18,
+          },
+        ],
+        "template_custom_fields_json": [],
+        "tenant_id": 1,
+        "total_amount": "11800.00",
+        "updated_at": "<timestamp>",
+      },
+    ],
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "4500.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 1,
+      "invoice_id": 1,
+      "notes": "First instalment",
+      "payment_code": "PAY-T-0001",
+      "payment_date": "2026-03-25T00:00:00.000Z",
+      "payment_mode": "BANK_TRANSFER",
+      "reference_number": "UTR-1",
+      "tds_amount": "1000.00",
+      "tds_applicable": true,
+      "tds_percent": "10.00",
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+    "payments": [
+      {
+        "amount_in_base_currency": null,
+        "amount_received": "4500.00",
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "exchange_rate": null,
+        "fx_gain_loss": "0.00",
+        "id": 1,
+        "invoice_id": 1,
+        "notes": "First instalment",
+        "payment_code": "PAY-T-0001",
+        "payment_date": "2026-03-25T00:00:00.000Z",
+        "payment_mode": "BANK_TRANSFER",
+        "reference_number": "UTR-1",
+        "tds_amount": "1000.00",
+        "tds_applicable": true,
+        "tds_percent": "10.00",
+        "tenant_id": 1,
+        "updated_at": "<timestamp>",
+      },
+    ],
+  },
+  "message": "Payment created successfully",
+  "success": true,
+}
+`;
+
+exports[`create a part payment with TDS: invoice after first payment 1`] = `
+{
+  "balance_outstanding": 6300,
+  "invoice_status": "PARTIALLY_PAID",
+  "payment_received_amount": 5500,
+}
+`;
+
+exports[`create a part payment with TDS: ledger lines 1`] = `
+[
+  [
+    "1000",
+    4500,
+    0,
+    4500,
+    0,
+  ],
+  [
+    "1200",
+    1000,
+    0,
+    1000,
+    0,
+  ],
+  [
+    "1100",
+    0,
+    5500,
+    0,
+    5500,
+  ],
+]
+`;
+
+exports[`create the final payment 1`] = `
+{
+  "data": {
+    "invoices": [
+      {
+        "amount_base": "11800.00",
+        "balance_outstanding": "0.00",
+        "bill_rate": "1000.00",
+        "bill_to_region_id": null,
+        "billing_period_end": null,
+        "billing_period_start": null,
+        "client_id": 1,
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "due_date": "2026-04-14T00:00:00.000Z",
+        "exchange_rate": "1.00000000",
+        "hours_or_units": "10.00",
+        "id": 1,
+        "invoice_date": "2026-03-15T00:00:00.000Z",
+        "invoice_number": "INV-P-0001",
+        "invoice_status": "PAID",
+        "invoice_template": "CLASSIC",
+        "invoice_template_id": null,
+        "invoice_template_name": null,
+        "invoice_template_snapshot_json": {},
+        "invoice_type": "CLIENT",
+        "notes": null,
+        "payment_received_amount": "11800.00",
+        "placement_id": 1,
+        "quickbooks_invoice_id": null,
+        "quickbooks_sync_status": "NOT_SYNCED",
+        "region_id": 1,
+        "sent_at": null,
+        "subtotal": "10000.00",
+        "tax_amount": "1800.00",
+        "tax_lines_json": [
+          {
+            "id": 1,
+            "sort_order": 1,
+            "tax_amount": 1800,
+            "tax_name": "GST",
+            "tax_percent": 18,
+          },
+        ],
+        "template_custom_fields_json": [],
+        "tenant_id": 1,
+        "total_amount": "11800.00",
+        "updated_at": "<timestamp>",
+      },
+    ],
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "6800.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 2,
+      "invoice_id": 1,
+      "notes": null,
+      "payment_code": "PAY-T-0002",
+      "payment_date": "2026-03-31T00:00:00.000Z",
+      "payment_mode": "BANK_TRANSFER",
+      "reference_number": "UTR-2",
+      "tds_amount": "0.00",
+      "tds_applicable": false,
+      "tds_percent": null,
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+    "payments": [
+      {
+        "amount_in_base_currency": null,
+        "amount_received": "6800.00",
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "exchange_rate": null,
+        "fx_gain_loss": "0.00",
+        "id": 2,
+        "invoice_id": 1,
+        "notes": null,
+        "payment_code": "PAY-T-0002",
+        "payment_date": "2026-03-31T00:00:00.000Z",
+        "payment_mode": "BANK_TRANSFER",
+        "reference_number": "UTR-2",
+        "tds_amount": "0.00",
+        "tds_applicable": false,
+        "tds_percent": null,
+        "tenant_id": 1,
+        "updated_at": "<timestamp>",
+      },
+    ],
+  },
+  "message": "Payment created successfully",
+  "success": true,
+}
+`;
+
+exports[`create the final payment: invoice after final payment 1`] = `
+{
+  "balance_outstanding": 0,
+  "invoice_status": "PAID",
+  "payment_received_amount": 11800,
+}
+`;
+
+exports[`delete 1`] = `
+{
+  "data": {
+    "invoice": {
+      "amount_base": "11800.00",
+      "balance_outstanding": "5000.00",
+      "bill_rate": "1000.00",
+      "bill_to_region_id": null,
+      "billing_period_end": null,
+      "billing_period_start": null,
+      "client_id": 1,
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "exchange_rate": "1.00000000",
+      "hours_or_units": "10.00",
+      "id": 1,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-P-0001",
+      "invoice_status": "PARTIALLY_PAID",
+      "invoice_template": "CLASSIC",
+      "invoice_template_id": null,
+      "invoice_template_name": null,
+      "invoice_template_snapshot_json": {},
+      "invoice_type": "CLIENT",
+      "notes": null,
+      "payment_received_amount": "6800.00",
+      "placement_id": 1,
+      "quickbooks_invoice_id": null,
+      "quickbooks_sync_status": "NOT_SYNCED",
+      "region_id": 1,
+      "sent_at": null,
+      "subtotal": "10000.00",
+      "tax_amount": "1800.00",
+      "tax_lines_json": [
+        {
+          "id": 1,
+          "sort_order": 1,
+          "tax_amount": 1800,
+          "tax_name": "GST",
+          "tax_percent": 18,
+        },
+      ],
+      "template_custom_fields_json": [],
+      "tenant_id": 1,
+      "total_amount": "11800.00",
+      "updated_at": "<timestamp>",
+    },
+  },
+  "message": "Payment deleted successfully",
+  "success": true,
+}
+`;
+
+exports[`delete: invoice after delete 1`] = `
+{
+  "balance_outstanding": 5000,
+  "invoice_status": "PARTIALLY_PAID",
+  "payment_received_amount": 6800,
+}
+`;
+
+exports[`delete: ledger history after delete 1`] = `
+[
+  {
+    "receivable": -5500,
+    "status": "REVERSED",
+  },
+  {
+    "receivable": 5500,
+    "status": "POSTED",
+  },
+  {
+    "receivable": -5000,
+    "status": "REVERSED",
+  },
+  {
+    "receivable": 5000,
+    "status": "POSTED",
+  },
+]
+`;
+
+exports[`get 1`] = `
+{
+  "data": {
+    "amount_in_base_currency": null,
+    "amount_received": "4500.00",
+    "candidate_name": "Asha Rao",
+    "client_name": "Local Client",
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "created_by_name": "Test Admin",
+    "currency": "INR",
+    "due_date": "2026-04-14T00:00:00.000Z",
+    "exchange_rate": null,
+    "fx_gain_loss": "0.00",
+    "id": 1,
+    "invoice_balance_outstanding": "6300.00",
+    "invoice_date": "2026-03-15T00:00:00.000Z",
+    "invoice_id": 1,
+    "invoice_number": "INV-P-0001",
+    "invoice_received_amount": "5500.00",
+    "invoice_status": "PARTIALLY_PAID",
+    "invoice_subtotal": "10000.00",
+    "invoice_total_amount": "11800.00",
+    "job_title": "Engineer",
+    "notes": "First instalment",
+    "payment_code": "PAY-T-0001",
+    "payment_date": "2026-03-25T00:00:00.000Z",
+    "payment_mode": "BANK_TRANSFER",
+    "placement_code": null,
+    "reference_number": "UTR-1",
+    "region_id": 1,
+    "region_name": "India",
+    "tds_amount": "1000.00",
+    "tds_applicable": true,
+    "tds_percent": "10.00",
+    "updated_at": "<timestamp>",
+  },
+  "success": true,
+}
+`;
+
+exports[`get a missing payment: status 404 1`] = `
+{
+  "message": "Payment not found",
+  "success": false,
+}
+`;
+
+exports[`list 1`] = `
+{
+  "data": [
+    {
+      "amount_in_base_currency": null,
+      "amount_received": "4500.00",
+      "amount_received_reporting": 52.94,
+      "candidate_name": "Asha Rao",
+      "client_name": "Local Client",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "created_by_name": "Test Admin",
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 1,
+      "invoice_balance_outstanding": "6300.00",
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_id": 1,
+      "invoice_number": "INV-P-0001",
+      "invoice_received_amount": "5500.00",
+      "invoice_status": "PARTIALLY_PAID",
+      "invoice_subtotal": "10000.00",
+      "invoice_total_amount": "11800.00",
+      "job_title": "Engineer",
+      "notes": "First instalment",
+      "payment_code": "PAY-T-0001",
+      "payment_date": "2026-03-25T00:00:00.000Z",
+      "payment_mode": "BANK_TRANSFER",
+      "placement_code": null,
+      "reference_number": "UTR-1",
+      "region_id": 1,
+      "region_name": "India",
+      "tds_amount": "1000.00",
+      "tds_applicable": true,
+      "tds_percent": "10.00",
+      "updated_at": "<timestamp>",
+    },
+  ],
+  "reporting_currency": "USD",
+  "success": true,
+}
+`;
+
+exports[`overpayment is refused: status 400 1`] = `
+{
+  "message": "Amount cannot exceed current net receivable of 0.00",
+  "success": false,
+}
+`;
+
+exports[`update 1`] = `
+{
+  "data": {
+    "invoice": {
+      "amount_base": "11800.00",
+      "balance_outstanding": "6800.00",
+      "bill_rate": "1000.00",
+      "bill_to_region_id": null,
+      "billing_period_end": null,
+      "billing_period_start": null,
+      "client_id": 1,
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "exchange_rate": "1.00000000",
+      "hours_or_units": "10.00",
+      "id": 1,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-P-0001",
+      "invoice_status": "PARTIALLY_PAID",
+      "invoice_template": "CLASSIC",
+      "invoice_template_id": null,
+      "invoice_template_name": null,
+      "invoice_template_snapshot_json": {},
+      "invoice_type": "CLIENT",
+      "notes": null,
+      "payment_received_amount": "5000.00",
+      "placement_id": 1,
+      "quickbooks_invoice_id": null,
+      "quickbooks_sync_status": "NOT_SYNCED",
+      "region_id": 1,
+      "sent_at": null,
+      "subtotal": "10000.00",
+      "tax_amount": "1800.00",
+      "tax_lines_json": [
+        {
+          "id": 1,
+          "sort_order": 1,
+          "tax_amount": 1800,
+          "tax_name": "GST",
+          "tax_percent": 18,
+        },
+      ],
+      "template_custom_fields_json": [],
+      "tenant_id": 1,
+      "total_amount": "11800.00",
+      "updated_at": "<timestamp>",
+    },
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "5000.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 1,
+      "invoice_id": 1,
+      "notes": "First instalment (corrected)",
+      "payment_code": "PAY-T-0001",
+      "payment_date": "2026-03-26T00:00:00.000Z",
+      "payment_mode": "BANK_TRANSFER",
+      "reference_number": "UTR-1",
+      "tds_amount": "0.00",
+      "tds_applicable": false,
+      "tds_percent": null,
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+  },
+  "message": "Payment updated successfully",
+  "success": true,
+}
+`;
+
+exports[`update: invoice after update 1`] = `
+{
+  "balance_outstanding": 6800,
+  "invoice_status": "PARTIALLY_PAID",
+  "payment_received_amount": 5000,
+}
+`;

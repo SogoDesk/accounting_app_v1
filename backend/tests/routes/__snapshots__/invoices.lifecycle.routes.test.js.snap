@@ -1,0 +1,1304 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create an impossible date is currently a 500: create 1`] = `
+{
+  "body": {
+    "error": "date/time field value out of range: "2026-02-31"",
+    "message": "Server error while creating invoice",
+    "success": false,
+  },
+  "status": 500,
+}
+`;
+
+exports[`create an impossible date is currently a 500: update 1`] = `
+{
+  "body": {
+    "error": "date/time field value out of range: "2026-02-31"",
+    "message": "Server error while updating invoice",
+    "success": false,
+  },
+  "status": 500,
+}
+`;
+
+exports[`create an unknown invoice type is refused 1`] = `
+{
+  "message": "Unknown invoice type: BARTER. Expected one of CLIENT, INTER_COMPANY",
+  "success": false,
+}
+`;
+
+exports[`create currency must match the placement 1`] = `
+{
+  "message": "Invoice currency must match the selected client/placement currency (INR)",
+  "success": false,
+}
+`;
+
+exports[`create foreign-currency invoice records the rate and base amount 1`] = `
+{
+  "data": {
+    "amount_base": "42000.00",
+    "balance_outstanding": "500.00",
+    "bill_rate": "50.00",
+    "bill_to_region_id": null,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": 2,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "USD",
+    "due_date": "2026-04-14",
+    "exchange_rate": "84.00000000",
+    "hours_or_units": "10.00",
+    "id": 3,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "INV-L-USD",
+    "invoice_status": "GENERATED",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "CLIENT",
+    "line_items": [
+      {
+        "activity_label": "Engineer",
+        "amount": 500,
+        "candidate_id": 1,
+        "candidate_name": "Asha Rao",
+        "description": "Hours",
+        "job_title": "Engineer",
+        "line_date": null,
+        "placement_id": 2,
+        "quantity": 10,
+        "rate": 50,
+        "unit_price": 50,
+      },
+    ],
+    "notes": null,
+    "payment_received_amount": "0.00",
+    "placement_id": 2,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "500.00",
+    "tax_amount": "0.00",
+    "tax_lines": [],
+    "tax_lines_json": [],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "500.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice created successfully",
+  "success": true,
+}
+`;
+
+exports[`create line items are required 1`] = `
+{
+  "message": "At least one invoice line item is required",
+  "success": false,
+}
+`;
+
+exports[`create without a number takes the next one in the series 1`] = `"INV-<year>-000002"`;
+
+exports[`delete a draft without payments is deleted 1`] = `
+{
+  "message": "Invoice deleted successfully",
+  "success": true,
+}
+`;
+
+exports[`delete a posted invoice is reversed when deleted 1`] = `
+[
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "AR_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "AR_INVOICE",
+    "status": "POSTED",
+  },
+]
+`;
+
+exports[`export CSV 1`] = `
+""Date","Invoice #","Client","Location","Candidate","Due","Currency","Total","Received","Outstanding","Total (USD)","Status"
+"Sun Mar 15","IC-L-0001","","India","","Tue Apr 14","USD","1,000.00","0.00","1,000.00","1,000.00","CANCELLED"
+"Sun Mar 15","INV-L-USD","Export Client","India","Asha Rao","Tue Apr 14","USD","500.00","0.00","500.00","500.00","OVERDUE"
+"Sun Mar 15","INV-L-TERMS","Local Client","India","Asha Rao","Tue Apr 14","INR","11,800.00","0.00","11,800.00","138.82","OVERDUE"
+"Sun Mar 15","INV-<year>-000002","Local Client","India","Asha Rao","Tue Apr 14","INR","11,800.00","0.00","11,800.00","138.82","OVERDUE"
+"Total","","","","","","","0.00","0.00","0.00","1,777.64","""
+`;
+
+exports[`export CSV filtered by status 1`] = `
+""Date","Invoice #","Client","Location","Candidate","Due","Currency","Total","Received","Outstanding","Total (USD)","Status"
+"Sun Mar 15","IC-L-0001","","India","","Tue Apr 14","USD","1,000.00","0.00","1,000.00","1,000.00","CANCELLED"
+"Total","","","","","","","0.00","0.00","0.00","1,000.00","""
+`;
+
+exports[`inter-company an entity cannot invoice itself 1`] = `
+{
+  "message": "An entity cannot invoice itself",
+  "success": false,
+}
+`;
+
+exports[`inter-company cancelling reverses both legs 1`] = `
+{
+  "data": {
+    "amount_base": "42000.00",
+    "balance_outstanding": "1000.00",
+    "bill_rate": "500.00",
+    "bill_to_region_id": 2,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": null,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "USD",
+    "due_date": "2026-04-14",
+    "exchange_rate": "84.00000000",
+    "hours_or_units": "2.00",
+    "id": 4,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "IC-L-0001",
+    "invoice_status": "CANCELLED",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "INTER_COMPANY",
+    "notes": null,
+    "payment_received_amount": "0.00",
+    "placement_id": null,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "1000.00",
+    "tax_amount": "0.00",
+    "tax_lines_json": [],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "1000.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice status updated successfully",
+  "success": true,
+}
+`;
+
+exports[`inter-company cancelling reverses both legs: ledger 1`] = `
+[
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 500,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 500,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 84000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 1000,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 84000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 1000,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+]
+`;
+
+exports[`inter-company create posts one entry in each entity 1`] = `
+{
+  "data": {
+    "amount_base": "42000.00",
+    "balance_outstanding": "500.00",
+    "bill_rate": "500.00",
+    "bill_to_region_id": 2,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": null,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "USD",
+    "due_date": "2026-04-14",
+    "exchange_rate": "84.00000000",
+    "hours_or_units": "1.00",
+    "id": 4,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "IC-L-0001",
+    "invoice_status": "GENERATED",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "INTER_COMPANY",
+    "line_items": [
+      {
+        "activity_label": null,
+        "amount": 500,
+        "candidate_id": null,
+        "candidate_name": null,
+        "description": "Shared services",
+        "job_title": null,
+        "line_date": null,
+        "placement_id": null,
+        "quantity": 1,
+        "rate": 500,
+        "unit_price": 500,
+      },
+    ],
+    "notes": null,
+    "payment_received_amount": "0.00",
+    "placement_id": null,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "500.00",
+    "tax_amount": "0.00",
+    "tax_lines": [],
+    "tax_lines_json": [],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "500.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice created successfully",
+  "success": true,
+}
+`;
+
+exports[`inter-company create posts one entry in each entity: ledger 1`] = `
+[
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 500,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+]
+`;
+
+exports[`inter-company tax lines are refused 1`] = `
+{
+  "message": "Inter-company invoices are zero-rated and cannot carry tax lines",
+  "success": false,
+}
+`;
+
+exports[`inter-company the type cannot be changed 1`] = `
+{
+  "message": "Invoice type cannot be changed after creation. Cancel this invoice and raise a new one.",
+  "success": false,
+}
+`;
+
+exports[`inter-company update reposts both legs 1`] = `
+{
+  "data": {
+    "amount_base": "42000.00",
+    "balance_outstanding": "1000.00",
+    "bill_rate": "500.00",
+    "bill_to_region_id": 2,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": null,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "USD",
+    "due_date": "2026-04-14",
+    "exchange_rate": "84.00000000",
+    "hours_or_units": "2.00",
+    "id": 4,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "IC-L-0001",
+    "invoice_status": "OVERDUE",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "INTER_COMPANY",
+    "line_items": [
+      {
+        "activity_label": null,
+        "amount": 1000,
+        "candidate_id": null,
+        "candidate_name": null,
+        "description": "Shared services",
+        "job_title": null,
+        "line_date": null,
+        "placement_id": null,
+        "quantity": 2,
+        "rate": 500,
+        "unit_price": 500,
+      },
+    ],
+    "notes": null,
+    "payment_received_amount": "0.00",
+    "placement_id": null,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "1000.00",
+    "tax_amount": "0.00",
+    "tax_lines": [],
+    "tax_lines_json": [],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "1000.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice updated successfully",
+  "success": true,
+}
+`;
+
+exports[`inter-company update reposts both legs: ledger 1`] = `
+[
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 500,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "REVERSED",
+  },
+  {
+    "amount": 42000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 500,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 84000,
+    "entity_id": 1,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+  {
+    "amount": 1000,
+    "entity_id": 2,
+    "source": "IC_INVOICE",
+    "status": "POSTED",
+  },
+]
+`;
+
+exports[`list filters client 1`] = `
+{
+  "invoice_numbers": [
+    "INV-L-USD",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 1,
+    "overdue": 1,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 1,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters currency 1`] = `
+{
+  "invoice_numbers": [
+    "IC-L-0001",
+    "INV-L-USD",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 2,
+    "overdue": 1,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 2,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters date range 1`] = `
+{
+  "invoice_numbers": [
+    "IC-L-0001",
+    "INV-L-USD",
+    "INV-L-TERMS",
+    "INV-<year>-000002",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 4,
+    "overdue": 3,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 4,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters paging 1`] = `
+{
+  "invoice_numbers": [
+    "INV-L-USD",
+  ],
+  "limit": 1,
+  "message": "Invoices fetched successfully",
+  "page": 2,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 4,
+    "overdue": 3,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 4,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters scope=collected 1`] = `
+{
+  "invoice_numbers": [],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 4,
+    "overdue": 3,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 0,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters scope=outstanding 1`] = `
+{
+  "invoice_numbers": [
+    "INV-L-USD",
+    "INV-L-TERMS",
+    "INV-<year>-000002",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 4,
+    "overdue": 3,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 3,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters search 1`] = `
+{
+  "invoice_numbers": [
+    "INV-L-USD",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 1,
+    "overdue": 1,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 1,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`list filters status=OVERDUE 1`] = `
+{
+  "invoice_numbers": [
+    "INV-L-USD",
+    "INV-L-TERMS",
+    "INV-<year>-000002",
+  ],
+  "limit": 100,
+  "message": "Invoices fetched successfully",
+  "page": 1,
+  "reporting_currency": "USD",
+  "success": true,
+  "tab_counts": {
+    "all": 4,
+    "overdue": 3,
+    "paid": 0,
+    "sent": 0,
+  },
+  "total": 3,
+  "totals": {
+    "all": {
+      "count": 4,
+      "due": 777.65,
+      "invoiced": 1777.65,
+      "overdue": 777.65,
+      "received": 0,
+    },
+    "by_region": {
+      "1": {
+        "count": 4,
+        "currency": "INR",
+        "due": 66100,
+        "functional": {
+          "due": 65600,
+          "invoiced": 107600,
+          "overdue": 65600,
+          "received": 0,
+        },
+        "functional_currency": "INR",
+        "invoiced": 151100,
+        "overdue": 66100,
+        "received": 0,
+      },
+    },
+    "reporting_currency": "USD",
+  },
+}
+`;
+
+exports[`lookups next number preview draws from the client and inter-company series 1`] = `
+{
+  "data": {
+    "invoice_number": "INV-<year>-000001",
+  },
+  "message": "Invoice number preview fetched successfully",
+  "success": true,
+}
+`;
+
+exports[`lookups next number preview draws from the client and inter-company series 2`] = `
+{
+  "data": {
+    "invoice_number": "IC-<year>-000001",
+  },
+  "message": "Invoice number preview fetched successfully",
+  "success": true,
+}
+`;
+
+exports[`lookups placement options 1`] = `
+{
+  "data": [
+    {
+      "bank_account_name": null,
+      "bank_account_number": null,
+      "bank_branch_details": null,
+      "bank_name": null,
+      "bank_routing_number": null,
+      "bank_swift_ifsc": null,
+      "bill_rate": "50.00",
+      "billing_type": "HOURLY",
+      "candidate_id": 1,
+      "candidate_name": "Asha Rao",
+      "client_currency": "USD",
+      "client_id": 2,
+      "client_name": "Export Client",
+      "company_address": null,
+      "company_id_label": null,
+      "company_id_value": null,
+      "company_name": null,
+      "currency": "USD",
+      "custom_payment_terms_days": null,
+      "default_payment_terms": "NET_30",
+      "end_date": null,
+      "expected_hours_per_month": "0.00",
+      "id": 2,
+      "invoice_brand_accent_color": null,
+      "invoice_brand_footer_note": null,
+      "invoice_brand_primary_color": null,
+      "invoice_cycle": "MONTHLY",
+      "invoice_terms_label": null,
+      "job_title": "Engineer",
+      "logo_url": null,
+      "monthly_billing_amount": "0.00",
+      "one_time_fee_amount": "0.00",
+      "payment_terms": "NET_30",
+      "placement_code": null,
+      "region_country_code": null,
+      "region_currency": "INR",
+      "region_id": 1,
+      "region_invoice_template": "CLASSIC",
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "start_date": "2026-01-01T00:00:00.000Z",
+      "tax_percent": "0.00",
+    },
+    {
+      "bank_account_name": null,
+      "bank_account_number": null,
+      "bank_branch_details": null,
+      "bank_name": null,
+      "bank_routing_number": null,
+      "bank_swift_ifsc": null,
+      "bill_rate": "1000.00",
+      "billing_type": "HOURLY",
+      "candidate_id": 1,
+      "candidate_name": "Asha Rao",
+      "client_currency": "INR",
+      "client_id": 1,
+      "client_name": "Local Client",
+      "company_address": null,
+      "company_id_label": null,
+      "company_id_value": null,
+      "company_name": null,
+      "currency": "INR",
+      "custom_payment_terms_days": null,
+      "default_payment_terms": "NET_30",
+      "end_date": null,
+      "expected_hours_per_month": "0.00",
+      "id": 1,
+      "invoice_brand_accent_color": null,
+      "invoice_brand_footer_note": null,
+      "invoice_brand_primary_color": null,
+      "invoice_cycle": "MONTHLY",
+      "invoice_terms_label": null,
+      "job_title": "Engineer",
+      "logo_url": null,
+      "monthly_billing_amount": "0.00",
+      "one_time_fee_amount": "0.00",
+      "payment_terms": "NET_30",
+      "placement_code": null,
+      "region_country_code": null,
+      "region_currency": "INR",
+      "region_id": 1,
+      "region_invoice_template": "CLASSIC",
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "start_date": "2026-01-01T00:00:00.000Z",
+      "tax_percent": "0.00",
+    },
+  ],
+  "message": "Invoice placement options fetched successfully",
+  "success": true,
+}
+`;
+
+exports[`status changes PAID in a TDS region needs the TDS answer 1`] = `
+{
+  "message": "TDS paid selection is required",
+  "success": false,
+}
+`;
+
+exports[`status changes PAID with TDS settles the rest, net of TDS 1`] = `
+{
+  "data": {
+    "amount_base": "11800.00",
+    "balance_outstanding": "0.00",
+    "bill_rate": "1000.00",
+    "bill_to_region_id": null,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": 1,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "INR",
+    "due_date": "2026-04-14",
+    "exchange_rate": "1.00000000",
+    "hours_or_units": "10.00",
+    "id": 2,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "INV-L-TERMS",
+    "invoice_status": "PAID",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "CLIENT",
+    "notes": null,
+    "payment_received_amount": "11800.00",
+    "placement_id": 1,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "10000.00",
+    "tax_amount": "1800.00",
+    "tax_lines_json": [
+      {
+        "id": 1,
+        "sort_order": 1,
+        "tax_amount": 1800,
+        "tax_name": "GST",
+        "tax_percent": 18,
+      },
+    ],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "11800.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice status updated successfully",
+  "success": true,
+}
+`;
+
+exports[`status changes PAID with TDS settles the rest, net of TDS: payments 1`] = `
+[
+  {
+    "amount": 3000,
+    "notes": "Auto-created from invoice status change to PARTIALLY_PAID",
+    "payment_date": "<today>",
+    "payment_mode": "AUTO",
+    "tds": 0,
+  },
+  {
+    "amount": 7800,
+    "notes": "Auto-created from invoice status change to PAID",
+    "payment_date": "2026-03-31",
+    "payment_mode": "AUTO",
+    "tds": 1000,
+  },
+]
+`;
+
+exports[`status changes PARTIALLY_PAID records an automatic payment 1`] = `
+{
+  "data": {
+    "amount_base": "11800.00",
+    "balance_outstanding": "8800.00",
+    "bill_rate": "1000.00",
+    "bill_to_region_id": null,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": 1,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "INR",
+    "due_date": "2026-04-14",
+    "exchange_rate": "1.00000000",
+    "hours_or_units": "10.00",
+    "id": 2,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "INV-L-TERMS",
+    "invoice_status": "PARTIALLY_PAID",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "CLIENT",
+    "notes": null,
+    "payment_received_amount": "3000.00",
+    "placement_id": 1,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "10000.00",
+    "tax_amount": "1800.00",
+    "tax_lines_json": [
+      {
+        "id": 1,
+        "sort_order": 1,
+        "tax_amount": 1800,
+        "tax_name": "GST",
+        "tax_percent": 18,
+      },
+    ],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "11800.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice status updated successfully",
+  "success": true,
+}
+`;
+
+exports[`status changes TDS percent is required when TDS was withheld 1`] = `
+{
+  "message": "TDS percentage is required when TDS is paid",
+  "success": false,
+}
+`;
+
+exports[`status changes a future payment date is refused 1`] = `
+{
+  "message": "Payment date cannot be in the future",
+  "success": false,
+}
+`;
+
+exports[`status changes a partial payment above the balance is refused 1`] = `
+{
+  "message": "Partial payment exceeds outstanding balance",
+  "success": false,
+}
+`;
+
+exports[`status changes an invoice with payments cannot be cancelled or deleted 1`] = `
+[
+  {
+    "message": "Cannot cancel invoice with existing payments",
+    "success": false,
+  },
+  {
+    "message": "Cannot delete invoice with linked payments",
+    "success": false,
+  },
+]
+`;
+
+exports[`status changes invalid status is refused 1`] = `
+{
+  "message": "Invalid invoice status",
+  "success": false,
+}
+`;
+
+exports[`status changes moving back to SENT removes the automatic payments 1`] = `
+{
+  "data": {
+    "amount_base": "11800.00",
+    "balance_outstanding": "11800.00",
+    "bill_rate": "1000.00",
+    "bill_to_region_id": null,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "client_id": 1,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "INR",
+    "due_date": "2026-04-14",
+    "exchange_rate": "1.00000000",
+    "hours_or_units": "10.00",
+    "id": 2,
+    "invoice_date": "2026-03-15",
+    "invoice_number": "INV-L-TERMS",
+    "invoice_status": "OVERDUE",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_type": "CLIENT",
+    "notes": null,
+    "payment_received_amount": "0.00",
+    "placement_id": 1,
+    "region_id": 1,
+    "sent_at": null,
+    "subtotal": "10000.00",
+    "tax_amount": "1800.00",
+    "tax_lines_json": [
+      {
+        "id": 1,
+        "sort_order": 1,
+        "tax_amount": 1800,
+        "tax_name": "GST",
+        "tax_percent": 18,
+      },
+    ],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "11800.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice status updated successfully",
+  "success": true,
+}
+`;
+
+exports[`status changes print data includes the payments 1`] = `
+{
+  "data": {
+    "amount_base": "11800.00",
+    "balance_outstanding": "0.00",
+    "bank_account_name": null,
+    "bank_account_number": null,
+    "bank_branch_details": null,
+    "bank_name": null,
+    "bank_routing_number": null,
+    "bank_swift_ifsc": null,
+    "bill_rate": "1000.00",
+    "bill_to_region_id": null,
+    "billing_address": null,
+    "billing_period_end": null,
+    "billing_period_start": null,
+    "billing_type": "HOURLY",
+    "candidate_name": "Asha Rao",
+    "client_id": 1,
+    "client_name": "Local Client",
+    "company_address": null,
+    "company_id_label": null,
+    "company_id_value": null,
+    "company_name": null,
+    "created_at": "<timestamp>",
+    "created_by": 1,
+    "currency": "INR",
+    "custom_payment_terms_days": null,
+    "customer_message": null,
+    "default_payment_terms": "NET_30",
+    "due_date": "2026-04-14",
+    "exchange_rate": "1.00000000",
+    "hours_or_units": "10.00",
+    "id": 2,
+    "internal_notes": null,
+    "invoice_brand_accent_color": null,
+    "invoice_brand_footer_note": null,
+    "invoice_brand_primary_color": null,
+    "invoice_cycle": "MONTHLY",
+    "invoice_date": "2026-03-15",
+    "invoice_number": "INV-L-TERMS",
+    "invoice_status": "PAID",
+    "invoice_template": "CLASSIC",
+    "invoice_template_id": null,
+    "invoice_template_name": null,
+    "invoice_template_snapshot_json": {},
+    "invoice_terms_label": null,
+    "invoice_type": "CLIENT",
+    "job_title": "Engineer",
+    "line_items": [
+      {
+        "activity_label": null,
+        "amount": "10000.00",
+        "candidate_id": null,
+        "candidate_name": null,
+        "created_at": "<timestamp>",
+        "description": "Hours",
+        "fallback_candidate_name": null,
+        "fallback_job_title": null,
+        "id": "2",
+        "invoice_id": 2,
+        "job_title": null,
+        "line_date": null,
+        "placement_code": null,
+        "placement_id": null,
+        "quantity": "10.00",
+        "rate": "1000.00",
+      },
+    ],
+    "logo_url": null,
+    "notes": null,
+    "payment_received_amount": "11800.00",
+    "payment_terms": "NET_30",
+    "payments": [
+      {
+        "amount_received": "7800.00",
+        "created_at": "<timestamp>",
+        "id": 2,
+        "invoice_id": 2,
+        "notes": "Auto-created from invoice status change to PAID",
+        "payment_date": "2026-03-31T00:00:00.000Z",
+        "payment_mode": "AUTO",
+        "reference_number": "REF-<year>-000002",
+        "updated_at": "<timestamp>",
+      },
+      {
+        "amount_received": "3000.00",
+        "created_at": "<timestamp>",
+        "id": 1,
+        "invoice_id": 2,
+        "notes": "Auto-created from invoice status change to PARTIALLY_PAID",
+        "payment_date": "2026-11-25T00:00:00.000Z",
+        "payment_mode": "AUTO",
+        "reference_number": "REF-<year>-000001",
+        "updated_at": "<timestamp>",
+      },
+    ],
+    "placement_code": null,
+    "placement_id": 1,
+    "primary_contact_email": "cli-inr@client.test",
+    "primary_contact_name": null,
+    "region_id": 1,
+    "region_invoice_template": "CLASSIC",
+    "region_name": "India",
+    "region_tds_applicable": true,
+    "sent_at": null,
+    "subtotal": "10000.00",
+    "tax_amount": "1800.00",
+    "tax_identifier": null,
+    "tax_lines": [
+      {
+        "id": 1,
+        "sort_order": 1,
+        "tax_amount": 1800,
+        "tax_name": "GST",
+        "tax_percent": 18,
+      },
+    ],
+    "tax_lines_json": [
+      {
+        "id": 1,
+        "sort_order": 1,
+        "tax_amount": 1800,
+        "tax_name": "GST",
+        "tax_percent": 18,
+      },
+    ],
+    "template_custom_fields_json": [],
+    "tenant_id": 1,
+    "total_amount": "11800.00",
+    "updated_at": "<timestamp>",
+  },
+  "message": "Invoice print data fetched successfully",
+  "success": true,
+}
+`;
+
+exports[`status changes promoting a draft posts it 1`] = `
+[
+  {
+    "amount": 11800,
+    "entity_id": 1,
+    "source": "AR_INVOICE",
+    "status": "POSTED",
+  },
+]
+`;

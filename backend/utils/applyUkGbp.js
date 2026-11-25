@@ -1,5 +1,5 @@
 // =============================================================================
-// applyUkGbp.js — switch TetriQ-UK (region id 2) to a GBP book currency, using
+// applyUkGbp.js — switch the UK entity (region id 2) to a GBP book currency, using
 // LIVE FX rates (no manual rate).
 //
 //   Run:  cd backend && node utils/applyUkGbp.js

@@ -6,9 +6,8 @@
 //
 // The password is taken from PLATFORM_ADMIN_PASSWORD if set (min 12 chars);
 // otherwise a strong random one is generated and printed once.
-// Applies migration 024 first, so it works on a database that lacks the table.
+// The platform_admins table comes from the migrations (npm run migrate:up).
 
-const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
@@ -46,12 +45,6 @@ const main = async () => {
   await client.connect();
 
   try {
-    const migration = fs.readFileSync(
-      path.resolve(__dirname, "../../database/migrations/024_platform_admins.sql"),
-      "utf8"
-    );
-    await client.query(migration);
-
     const existing = await client.query(
       "SELECT id, email FROM platform_admins LIMIT 1"
     );

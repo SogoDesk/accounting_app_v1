@@ -4,9 +4,9 @@ const SAMPLE_LOGO =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="34">' +
-      '<rect width="150" height="34" rx="4" fill="#d8ebe6"/>' +
+      '<rect width="150" height="34" rx="4" fill="#E5E7EB"/>' +
       '<text x="75" y="22" font-family="Segoe UI,Arial" font-size="13" font-weight="600" ' +
-      'fill="#0f7d70" text-anchor="middle">YOUR LOGO</text></svg>',
+      'fill="#4B5563" text-anchor="middle">YOUR LOGO</text></svg>',
   );
 
 const TOKENS = [
@@ -19,11 +19,11 @@ const TOKENS = [
   { key: "payment_terms", label: "Payment terms", sample: "Net 30" },
   { key: "client_name", label: "Client name", sample: "Acme Corp" },
   { key: "contact_name", label: "Contact name", sample: "John Smith" },
-  { key: "company_name", label: "Your company", sample: "TetriQ Solutions" },
-  { key: "company_address", label: "Your address", sample: "Carrollton, Texas, USA" },
+  { key: "company_name", label: "Your company", sample: "Your Company Ltd" },
+  { key: "company_address", label: "Your address", sample: "1 Example Street, Springfield" },
   { key: "logo_url", label: "Logo", sample: SAMPLE_LOGO },
   { key: "header_banner_url", label: "Header banner", sample: "" },
-  { key: "footer_note", label: "Footer note", sample: "info@tetriqsolutions.com · +1 (804) 336-2001" },
+  { key: "footer_note", label: "Footer note", sample: "accounts@yourcompany.example · +1 555 0100" },
   { key: "region_name", label: "Region", sample: "United Kingdom" },
   { key: "days_until_due", label: "Days until due", sample: "5", reminderOnly: true },
   { key: "days_overdue", label: "Days overdue", sample: "12", reminderOnly: true },
@@ -76,6 +76,9 @@ const fmtMoney = (amount, currency) => {
 const dayIndex = (v) => Math.floor(Date.parse(`${fmtDate(v)}T00:00:00Z`) / 86400000);
 const daysBetween = (from, to) => Math.max(0, dayIndex(to) - dayIndex(from));
 
+// brand: { email_logo_url, header_banner_url } from assetStore, plus
+// branding (services/branding) for the company name and logo an invoice's
+// entity has not set.
 const buildContext = (invoice = {}, brand = {}) => {
   const ccy = invoice.currency;
   const due = invoice.due_date ? new Date(invoice.due_date) : null;
@@ -90,9 +93,9 @@ const buildContext = (invoice = {}, brand = {}) => {
     payment_terms: invoice.payment_terms_label || invoice.default_payment_terms || "Net 30",
     client_name: invoice.client_name || "",
     contact_name: invoice.primary_contact_name || invoice.client_name || "there",
-    company_name: invoice.company_name || invoice.region_name || "",
+    company_name: invoice.company_name || brand.branding?.name || invoice.region_name || "",
     company_address: invoice.company_address || "",
-    logo_url: brand.email_logo_url || safeUrl(invoice.logo_url),
+    logo_url: brand.email_logo_url || safeUrl(invoice.logo_url) || safeUrl(brand.branding?.logoUrl),
     header_banner_url: brand.header_banner_url || "",
     footer_note: invoice.footer_note || "",
     region_name: invoice.region_name || "",
@@ -101,8 +104,12 @@ const buildContext = (invoice = {}, brand = {}) => {
   };
 };
 
-const sampleContext = () =>
-  Object.fromEntries(TOKENS.map((t) => [t.key, t.sample]));
+// Sample values for the template editor's preview, using the tenant's own
+// name where branding provides one.
+const sampleContext = (branding = null) => ({
+  ...Object.fromEntries(TOKENS.map((t) => [t.key, t.sample])),
+  ...(branding?.name ? { company_name: branding.name } : {}),
+});
 
 const render = (template, context, { escape = true } = {}) =>
   String(template ?? "").replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (match, key) => {

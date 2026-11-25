@@ -1,12 +1,12 @@
 
 const pool = require("../config/db");
-const { getTenantId } = require("../config/tenantContext");
+const { getTenantId, getTenantClient } = require("../config/tenantContext");
+const { getBranding } = require("../services/branding/brandingService");
 const { auditLog } = require("../middleware/auditMiddleware");
 const {
-  ensureEmailSchema,
   TEMPLATE_KEYS,
   DEFAULT_TEMPLATES,
-} = require("../modules/email/ensureEmailSchema");
+} = require("../modules/email/defaultTemplates");
 const renderer = require("../services/email/renderer");
 const invoiceQuery = require("../services/email/invoiceQuery");
 const dispatcher = require("../services/email/dispatcher");
@@ -36,7 +36,6 @@ const normalizeKey = (value) => {
 const listTemplates = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const { rows } = await pool.query(
       `SELECT *
@@ -59,7 +58,6 @@ const listTemplates = async (req, res) => {
 const updateTemplate = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const key = normalizeKey(req.params.key);
 
@@ -142,7 +140,6 @@ const updateTemplate = async (req, res) => {
 const resetTemplate = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const key = normalizeKey(req.params.key);
 
@@ -204,16 +201,16 @@ const resetTemplate = async (req, res) => {
 const previewTemplate = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const invoiceId = req.body.invoice_id
       ? Number(req.body.invoice_id)
       : null;
 
-    const brand = assetStore.brandTokens();
+    const branding = await getBranding(getTenantClient());
+    const brand = { ...assetStore.brandTokens(), branding };
 
     let context = {
-      ...renderer.sampleContext(),
+      ...renderer.sampleContext(branding),
       ...Object.fromEntries(
         Object.entries({
           logo_url: brand.email_logo_url,
@@ -295,7 +292,6 @@ const cleanDayList = (value, fallback) => {
 const getSchedule = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const { rows } = await pool.query(
       `SELECT *
@@ -316,7 +312,6 @@ const getSchedule = async (req, res) => {
 const updateSchedule = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const before = cleanDayList(req.body.before_due_days, [10, 5]);
     const overdue = cleanDayList(req.body.overdue_days, [1, 7, 14]).sort(
@@ -375,7 +370,6 @@ const updateSchedule = async (req, res) => {
 const sendInvoiceEmail = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const invoiceId = Number(req.params.id);
 
@@ -434,7 +428,6 @@ const sendInvoiceEmail = async (req, res) => {
 const invoiceEmailHistory = async (req, res) => {
   try {
     const tenantId = tenantIdFor(req);
-    await ensureEmailSchema(pool, tenantId);
 
     const { rows } = await pool.query(
       `SELECT id, template_key, to_email, subject, status,

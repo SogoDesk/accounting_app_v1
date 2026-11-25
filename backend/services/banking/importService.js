@@ -39,7 +39,7 @@ async function importStatement(db, { bankAccount, source, filename, lines, userI
          (bank_account_id, import_id, txn_date, value_date, description, reference, amount, currency,
           running_balance, external_id, dedupe_hash)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-       ON CONFLICT (bank_account_id, dedupe_hash) DO NOTHING
+       ON CONFLICT (tenant_id, bank_account_id, dedupe_hash) DO NOTHING
        RETURNING id`,
       [
         bankAccount.id, importId, line.txnDate, line.valueDate || null, line.description || null,

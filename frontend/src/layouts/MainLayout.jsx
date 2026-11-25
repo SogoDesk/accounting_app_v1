@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useEntity } from '../context/EntityContext'
-import api from '../services/api'
+import api, { resolveAssetUrl } from '../services/api'
+import { useBranding, clearBranding } from '../utils/branding'
 import { setAppPreferencesFromRegion } from '../utils/appPreferences'
 import './shell.css'
 
@@ -268,6 +269,10 @@ const iconFor = (type) => {
 
 export default function MainLayout({ children }) {
   const { user, tenant, logout, hasRole } = useAuth()
+  // The company's own name and logo (GET /settings/branding).
+  const branding = useBranding()
+  const brandLogo = resolveAssetUrl(branding?.logo_url)
+  const companyName = branding?.name || tenant?.name
   const { dark, toggle, accent, setAccent, accents } = useTheme()
   // The top-bar region pill IS the app-wide entity switcher: it writes the
   // shared EntityContext (`entityId`), which the dashboard filters on and every
@@ -431,6 +436,7 @@ export default function MainLayout({ children }) {
 
   const handleLogout = () => {
     setProfileOpen(false)
+    clearBranding()
     logout()
     navigate('/')
   }
@@ -559,10 +565,12 @@ export default function MainLayout({ children }) {
             <span /><span /><span />
           </button>
           <div className="sdb-brand">
-            <div className="sdb-logo" aria-hidden="true">SD</div>
+            <div className={brandLogo ? 'sdb-logo sdb-logo-image' : 'sdb-logo'} aria-hidden="true">
+              {brandLogo ? <img src={brandLogo} alt="" /> : 'SD'}
+            </div>
             <div className="sdb-brand-text">
               <div className="sdb-brand-title">SogoDesk Books</div>
-              <div className="sdb-brand-sub">{tenant?.name || 'Multi-entity accounting & staffing'}</div>
+              <div className="sdb-brand-sub">{companyName || 'Multi-entity accounting & staffing'}</div>
             </div>
           </div>
 

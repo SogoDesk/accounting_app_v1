@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api, { resolveAssetUrl } from '../services/api'
 import { fmt, fmtDateDisplay, customerLabel } from '../components/ui/index.jsx'
+import { useBranding } from '../utils/branding'
 
 const normalizeNumber = (value) => {
   const num = Number(value || 0)
@@ -39,6 +40,7 @@ export default function InvoicePrintPage() {
   const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const branding = useBranding()
 
   useEffect(() => {
     api.get(`/invoices/${id}/print`)
@@ -78,7 +80,8 @@ export default function InvoicePrintPage() {
   const clientAddressLines = splitAddress(invoice.billing_address)
   const customerMessage = invoice.customer_message || 'Thank you for your Business.'
   const paymentIntro = bankLines.length > 0 ? 'Please find ACH Details for Payments' : ''
-  const logoSrc = resolveAssetUrl(invoice.logo_url)
+  // The entity's own name and logo, else the company's (settings > branding).
+  const logoSrc = resolveAssetUrl(invoice.logo_url || branding?.logo_url)
 
   return (
     <div className="invoice-print-page">
@@ -91,7 +94,7 @@ export default function InvoicePrintPage() {
         <header className="qb-invoice-top">
           <div className="qb-company-block">
             {logoSrc ? <img src={logoSrc} alt="Company logo" className="qb-logo" /> : null}
-            <strong>{invoice.company_name || 'Company'}</strong>
+            <strong>{invoice.company_name || branding?.name || 'Company'}</strong>
             {companyAddressLines.map((line) => <span key={line}>{line}</span>)}
             {invoice.company_id_value ? (
               <span>{invoice.company_id_label || 'ID'}: {invoice.company_id_value}</span>

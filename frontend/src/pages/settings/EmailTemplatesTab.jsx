@@ -370,7 +370,7 @@ export default function EmailTemplatesTab() {
             <textarea className="form-control" rows={2} style={{ resize: 'vertical' }}
               value={draft.footer_note}
               onChange={e => setDraft(d => ({ ...d, footer_note: e.target.value }))}
-              placeholder="e.g. info@tetriqsolutions.com &middot; +1 (804) 336-2001" />
+              placeholder="e.g. accounts@yourcompany.example &middot; +1 555 0100" />
             <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 9, lineHeight: 1.5 }}>
               Prints at the bottom under your company name and address. Those come from the
               issuing region, set them in <strong>Settings &rarr; Organization</strong>.

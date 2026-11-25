@@ -52,15 +52,14 @@ const canonical = (entry, lines) =>
   });
 
 // ---- account-code resolution (subledgers build lines by code) --------------
-const _accountCache = new Map();
+// Not cached: every tenant has its own chart, so the same code maps to a
+// different id per tenant. Row-level security on `db` picks the right one.
 async function accountIdByCode(code, db) {
-  if (_accountCache.has(code)) return _accountCache.get(code);
   const { rows } = await db.query(
     "SELECT id FROM chart_of_accounts WHERE account_code = $1 AND is_active = true",
     [code],
   );
   if (!rows.length) throw new Error(`Account code not found: ${code}`);
-  _accountCache.set(code, rows[0].id);
   return rows[0].id;
 }
 
@@ -102,7 +101,7 @@ async function ensurePeriodCovers(db, dateStr) {
     `WITH fy AS (
         INSERT INTO fiscal_years (year_label, start_date, end_date, status)
         VALUES ($1::text, make_date($1::int, 1, 1), make_date($1::int, 12, 31), 'OPEN')
-        ON CONFLICT (year_label) DO UPDATE SET year_label = EXCLUDED.year_label
+        ON CONFLICT (tenant_id, year_label) DO UPDATE SET year_label = EXCLUDED.year_label
         RETURNING id
      )
      INSERT INTO accounting_periods (fiscal_year_id, period_no, period_label, start_date, end_date, status)
@@ -112,7 +111,7 @@ async function ensurePeriodCovers(db, dateStr) {
             (make_date($1::int, m, 1) + INTERVAL '1 month - 1 day')::date,
             'OPEN'
      FROM fy, generate_series(1, 12) AS m
-     ON CONFLICT (fiscal_year_id, period_no) DO NOTHING`,
+     ON CONFLICT (tenant_id, fiscal_year_id, period_no) DO NOTHING`,
     [year],
   );
 }

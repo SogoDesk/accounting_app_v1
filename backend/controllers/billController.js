@@ -3,7 +3,6 @@
 
 const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
-const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { generateBillNumber } = require("../utils/codeGenerator");
 const glPosting = require("../services/gl/postingService");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
@@ -97,7 +96,6 @@ const recalculateBillBalances = async (db, billId) => {
 const getAllBills = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const { status, approval_status, vendor_id, region_id, search } = req.query;
     const conditions = ["b.deleted_at IS NULL"], values = []; let idx = 1;
     if (status) { conditions.push(`b.bill_status=$${idx++}`); values.push(String(status).toUpperCase()); }
@@ -117,7 +115,6 @@ const getAllBills = async (req, res) => {
 const getBillById = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const result = await db.query(`SELECT b.*,v.vendor_name,v.vendor_code,r.region_name FROM bills b JOIN vendors v ON v.id=b.vendor_id JOIN regions r ON r.id=b.region_id WHERE b.id=$1 AND b.deleted_at IS NULL LIMIT 1`, [req.params.id]);
     if (!result.rows.length || !canActOnEntity(req, result.rows[0].region_id)) return res.status(404).json({ success: false, message: "Bill not found" });
     return res.json({ success: true, data: await mapBill(db, result.rows[0]) });
@@ -132,7 +129,6 @@ const createBill = async (req, res) => {
   let db;
   try {
     db = getTenantDb();
-    await ensureApSchema(db);
     const { bill_number, vendor_id, region_id, bill_date, due_date, service_period_start, service_period_end, currency, invoice_reference, external_reference, notes, tax_lines = [], line_items = [] } = req.body;
     if (!vendor_id || !region_id || !bill_date || !due_date) return res.status(400).json({ success: false, message: "Vendor, region, bill date, and due date are required" });
     if (!canActOnEntity(req, region_id)) return res.status(403).json({ success: false, message: "Not authorized for this entity (region)" });
@@ -142,7 +138,7 @@ const createBill = async (req, res) => {
     await db.query("BEGIN");
     const header = (await db.query(`INSERT INTO bills(bill_number,vendor_id,region_id,bill_date,due_date,service_period_start,service_period_end,subtotal,tax_amount,total_amount,currency,bill_status,approval_status,payment_paid_amount,balance_outstanding,invoice_reference,external_reference,notes,tax_lines_json,created_by)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'DRAFT','NOT_SUBMITTED',0,$10,$12,$13,$14,$15,$16) RETURNING *`,
-      [billNo, Number(vendor_id), Number(region_id), sanitizeDate(bill_date), sanitizeDate(due_date), sanitizeDate(service_period_start), sanitizeDate(service_period_end), amounts.subtotal, amounts.taxAmount, amounts.totalAmount, String(currency || "USD").toUpperCase(), toNullable(invoice_reference), toNullable(external_reference), toNullable(notes), amounts.computedTaxLines, req.user?.id || null])).rows[0];
+      [billNo, Number(vendor_id), Number(region_id), sanitizeDate(bill_date), sanitizeDate(due_date), sanitizeDate(service_period_start), sanitizeDate(service_period_end), amounts.subtotal, amounts.taxAmount, amounts.totalAmount, String(currency || "USD").toUpperCase(), toNullable(invoice_reference), toNullable(external_reference), toNullable(notes), JSON.stringify(amounts.computedTaxLines), req.user?.id || null])).rows[0];
     await upsertBillItems(db, header.id, items); await db.query("COMMIT");
     await auditLog({ userId:req.user?.id,userEmail:req.user?.email,action:"CREATE",entityType:"bills",entityId:header.id,newValues:header,ipAddress:req.ip });
     return res.status(201).json({ success:true,message:"Bill created",data:await mapBill(db,header) });
@@ -160,7 +156,7 @@ const updateBill = async (req, res) => {
   let db;
   try {
     db = getTenantDb();
-    await ensureApSchema(db); const id = Number(req.params.id);
+    const id = Number(req.params.id);
     const er = await db.query(`SELECT * FROM bills WHERE id=$1 AND deleted_at IS NULL LIMIT 1`, [id]);
     if (!er.rows.length || !canActOnEntity(req, er.rows[0].region_id)) return res.status(404).json({ success:false,message:"Bill not found" });
     const existing = er.rows[0];
@@ -172,7 +168,7 @@ const updateBill = async (req, res) => {
     if ((await db.query(`SELECT id FROM bills WHERE bill_number=$1 AND id<>$2 LIMIT 1`,[billNo,id])).rows.length) return res.status(400).json({success:false,message:"Bill number already exists"});
     await db.query("BEGIN");
     await db.query(`UPDATE bills SET bill_number=$1,vendor_id=$2,region_id=$3,bill_date=$4,due_date=$5,service_period_start=$6,service_period_end=$7,subtotal=$8,tax_amount=$9,total_amount=$10,currency=$11,invoice_reference=$12,external_reference=$13,notes=$14,tax_lines_json=$15,balance_outstanding=GREATEST($10-COALESCE(payment_paid_amount,0),0),updated_at=CURRENT_TIMESTAMP WHERE id=$16 RETURNING *`,
-      [billNo,Number(p.vendor_id),Number(p.region_id),sanitizeDate(p.bill_date),sanitizeDate(p.due_date),sanitizeDate(p.service_period_start),sanitizeDate(p.service_period_end),a.subtotal,a.taxAmount,a.totalAmount,String(p.currency||existing.currency||"USD").toUpperCase(),toNullable(p.invoice_reference),toNullable(p.external_reference),toNullable(p.notes),a.computedTaxLines,id]);
+      [billNo,Number(p.vendor_id),Number(p.region_id),sanitizeDate(p.bill_date),sanitizeDate(p.due_date),sanitizeDate(p.service_period_start),sanitizeDate(p.service_period_end),a.subtotal,a.taxAmount,a.totalAmount,String(p.currency||existing.currency||"USD").toUpperCase(),toNullable(p.invoice_reference),toNullable(p.external_reference),toNullable(p.notes),JSON.stringify(a.computedTaxLines),id]);
     await upsertBillItems(db,id,items); const updated=await recalculateBillBalances(db,id); await syncBillGl(db,updated,req.user?.id||null,"repost"); await db.query("COMMIT");
     await auditLog({userId:req.user?.id,userEmail:req.user?.email,action:"UPDATE",entityType:"bills",entityId:id,oldValues:existing,newValues:updated,ipAddress:req.ip});
     return res.json({success:true,message:"Bill updated",data:await mapBill(db,updated)});
@@ -181,7 +177,7 @@ const updateBill = async (req, res) => {
 const updateBillStatus = async (req,res) => {
   try {
     const db=getTenantDb();
-    await ensureApSchema(db); const id=Number(req.params.id), requested=String(req.body.status||req.body.bill_status||"").toUpperCase(), comments=toNullable(req.body.comments);
+    const id=Number(req.params.id), requested=String(req.body.status||req.body.bill_status||"").toUpperCase(), comments=toNullable(req.body.comments);
     if(!ALLOWED_BILL_STATUSES.has(requested)) return res.status(400).json({success:false,message:"Invalid bill status"});
     const er=await db.query(`SELECT * FROM bills WHERE id=$1 AND deleted_at IS NULL LIMIT 1`,[id]);
     if(!er.rows.length||!canActOnEntity(req,er.rows[0].region_id)) return res.status(404).json({success:false,message:"Bill not found"});
@@ -202,7 +198,7 @@ const updateBillStatus = async (req,res) => {
 const deleteBill = async (req,res) => {
   try {
     const db=getTenantDb();
-    await ensureApSchema(db); const id=Number(req.params.id);
+    const id=Number(req.params.id);
     const er=await db.query(`SELECT * FROM bills WHERE id=$1 AND deleted_at IS NULL LIMIT 1`,[id]);
     if(!er.rows.length||!canActOnEntity(req,er.rows[0].region_id)) return res.status(404).json({success:false,message:"Bill not found"});
     if(Number((await db.query(`SELECT COUNT(*)::int AS count FROM vendor_payments WHERE bill_id=$1`,[id])).rows[0]?.count||0)>0) return res.status(400).json({success:false,message:"Cannot delete bill with linked payments"});
@@ -217,7 +213,7 @@ const deleteBill = async (req,res) => {
 const exportBills = async (req,res) => {
   try {
     const db=getTenantDb();
-    await ensureApSchema(db); const {status,approval_status,vendor_id,region_id,search,from,to}=req.query;
+    const {status,approval_status,vendor_id,region_id,search,from,to}=req.query;
     const conditions=["b.deleted_at IS NULL"],values=[];let idx=1;
     if(approval_status){conditions.push(`b.approval_status=$${idx++}`);values.push(String(approval_status).toUpperCase());}
     if(vendor_id){conditions.push(`b.vendor_id=$${idx++}`);values.push(Number(vendor_id));}
@@ -237,7 +233,6 @@ const exportBills = async (req,res) => {
 const downloadBillPdf = async (req,res) => {
   try {
     const db=getTenantDb();
-    await ensureApSchema(db);
     const result=await db.query(`SELECT b.*,v.vendor_name,v.vendor_code,r.region_name FROM bills b JOIN vendors v ON v.id=b.vendor_id JOIN regions r ON r.id=b.region_id WHERE b.id=$1 AND b.deleted_at IS NULL LIMIT 1`,[req.params.id]);
     if(!result.rows.length||!canActOnEntity(req,result.rows[0].region_id)) return res.status(404).json({success:false,message:"Bill not found"});
     const bill=await mapBill(db,result.rows[0]);const {generateBillPdf}=require("../utils/billPdf");return generateBillPdf(bill,res);

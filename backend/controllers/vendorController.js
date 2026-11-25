@@ -5,7 +5,6 @@
 const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
 const { generateVendorCode } = require("../utils/codeGenerator");
-const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { canActOnEntity } = require("../middleware/scopeMiddleware");
 
 const getTenantDb = () => {
@@ -26,7 +25,6 @@ const sanitizeVendorRecord = (vendor = {}) => vendor;
 const getAllVendors = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const { status, region_id, search } = req.query;
     const conditions = ["v.deleted_at IS NULL"];
     const values = [];
@@ -71,7 +69,6 @@ const getAllVendors = async (req, res) => {
 const getVendorById = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const result = await db.query(
       `SELECT v.*, r.region_name
          FROM vendors v
@@ -94,7 +91,6 @@ const getVendorById = async (req, res) => {
 const createVendor = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const {
       vendor_name, vendor_code, region_id, billing_address, tax_identifier,
       currency, default_payment_terms, primary_contact_name, primary_contact_email,
@@ -173,7 +169,6 @@ const createVendor = async (req, res) => {
 const updateVendor = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const { id } = req.params;
     const existing = await db.query(
       `SELECT * FROM vendors WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
@@ -245,7 +240,6 @@ const updateVendor = async (req, res) => {
 const deleteVendor = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const { id } = req.params;
     const existingVendor = await db.query(
       `SELECT region_id FROM vendors WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
@@ -291,7 +285,6 @@ const deleteVendor = async (req, res) => {
 const getVendorOverview = async (req, res) => {
   try {
     const db = getTenantDb();
-    await ensureApSchema(db);
     const id = Number(req.params.id);
     const vendorRes = await db.query(
       `SELECT v.*, r.region_name

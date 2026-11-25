@@ -146,7 +146,7 @@ const createCategory = async (req, res) => {
     if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: "Category name is required" });
     const { rows } = await db.query(
       `INSERT INTO expense_categories (name, gl_account_id) VALUES ($1, $2)
-       ON CONFLICT (name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, is_active = true
+       ON CONFLICT (tenant_id, name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, is_active = true
        RETURNING *`, [String(name).trim(), gl_account_id || null]);
     return res.status(201).json({ success: true, data: rows[0] });
   } catch (e) { return res.status(500).json({ success: false, message: e.message }); }
@@ -282,7 +282,7 @@ const createPaymentMethod = async (req, res) => {
     if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: "Payment method name is required" });
     const { rows } = await db.query(
       `INSERT INTO payment_methods (name, method_type, gl_account_id) VALUES ($1, $2, $3)
-       ON CONFLICT (name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, method_type = EXCLUDED.method_type, is_active = true
+       ON CONFLICT (tenant_id, name) DO UPDATE SET gl_account_id = EXCLUDED.gl_account_id, method_type = EXCLUDED.method_type, is_active = true
        RETURNING *`,
       [String(name).trim(), String(method_type || "BANK").toUpperCase(), gl_account_id || null]);
     return res.status(201).json({ success: true, data: rows[0] });

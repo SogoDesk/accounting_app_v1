@@ -44,93 +44,8 @@ const normalizeMonthNumber = (value, fallback) => {
   return fallback;
 };
 
-// Memoized per process: these columns are provided by migration 000_base, so
-// the safety-net ALTERs run at most once per boot instead of on every request.
-let _brandingEnsured = false;
-const ensureRegionBrandingColumns = async (db) => {
-  if (_brandingEnsured) return;
-  try {
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS invoice_template varchar(30) DEFAULT 'CLASSIC'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS invoice_brand_primary_color varchar(7) DEFAULT '#111827'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS invoice_brand_accent_color varchar(7) DEFAULT '#1D4ED8'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS invoice_brand_footer_note text
-    `);
-    _brandingEnsured = true;
-  } catch (err) {
-    console.error("ensureRegionBrandingColumns warning:", err.message);
-  }
-};
-
-let _preferencesEnsured = false;
-const ensureRegionPreferenceColumns = async (db) => {
-  if (_preferencesEnsured) return;
-  try {
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS date_format varchar(20) DEFAULT 'MM/DD/YYYY'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS currency_format varchar(20) DEFAULT 'SYMBOL'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS customer_label varchar(80) DEFAULT 'Client'
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS warn_duplicate_invoice_number boolean DEFAULT true
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS first_month_fiscal_year smallint DEFAULT 1
-    `);
-    await db.query(`
-      ALTER TABLE regions
-      ADD COLUMN IF NOT EXISTS first_month_tax_year smallint DEFAULT 4
-    `);
-    // Mirrors migration 015: whichever runs first adds the column and backfills
-    // India; the other no-ops. Kept together so the two paths can't disagree.
-    await db.query(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_schema = 'public'
-            AND table_name = 'regions'
-            AND column_name = 'tds_applicable'
-        ) THEN
-          ALTER TABLE regions
-            ADD COLUMN tds_applicable boolean NOT NULL DEFAULT false;
-
-          UPDATE regions
-             SET tds_applicable = true
-           WHERE upper(coalesce(country_code, '')) = 'IN'
-              OR upper(coalesce(default_currency, '')) = 'INR';
-        END IF;
-      END $$;
-    `);
-    _preferencesEnsured = true;
-  } catch (err) {
-    console.error("ensureRegionPreferenceColumns warning:", err.message);
-  }
-};
-
 const getAllRegions = async (req, res) => {
   try {
-    await ensureRegionBrandingColumns(pool);
-    await ensureRegionPreferenceColumns(pool);
     // Row-level RBAC: a region IS the legal entity, so restrict the list to the
     // caller's allowed entities (regions.id ∈ allowedEntityIds).
     let result;
@@ -187,8 +102,6 @@ const createRegion = async (req, res) => {
       });
     }
 
-    await ensureRegionBrandingColumns(pool);
-    await ensureRegionPreferenceColumns(pool);
 
     const finalRegionCode = String(
       region_code || (await generateRegionCode(pool, region_name)),
@@ -252,8 +165,8 @@ const createRegion = async (req, res) => {
         toNullable(bank_swift_ifsc),
         toNullable(bank_branch_details),
         normalizeInvoiceTemplate(invoice_template),
-        normalizeHexColor(invoice_brand_primary_color, "#111827"),
-        normalizeHexColor(invoice_brand_accent_color, "#1D4ED8"),
+        normalizeHexColor(invoice_brand_primary_color, null), // blank: follow company branding
+        normalizeHexColor(invoice_brand_accent_color, null),
         toNullable(invoice_brand_footer_note),
         toNullable(country_name),
         toNullable(country_code),
@@ -335,8 +248,6 @@ const updateRegion = async (req, res) => {
       invoice_brand_footer_note,
     } = req.body;
 
-    await ensureRegionBrandingColumns(pool);
-    await ensureRegionPreferenceColumns(pool);
 
     const existing = await pool.query("SELECT * FROM regions WHERE id=$1", [
       id,
@@ -419,8 +330,8 @@ const updateRegion = async (req, res) => {
         toNullable(bank_swift_ifsc),
         toNullable(bank_branch_details),
         normalizeInvoiceTemplate(invoice_template),
-        normalizeHexColor(invoice_brand_primary_color, "#111827"),
-        normalizeHexColor(invoice_brand_accent_color, "#1D4ED8"),
+        normalizeHexColor(invoice_brand_primary_color, null), // blank: follow company branding
+        normalizeHexColor(invoice_brand_accent_color, null),
         toNullable(invoice_brand_footer_note),
         toNullable(country_name),
         toNullable(country_code),

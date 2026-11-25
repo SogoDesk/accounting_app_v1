@@ -1,0 +1,630 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`list and export CSV export 1`] = `
+""Date","Payment #","Invoice #","Client","Location","Mode","Reference","Currency","Amount","Amount (USD)"
+"Tue Mar 31","PAY-<year>-000005","INV-PL-USD","Export Client","India","WIRE_TRANSFER","REF-<year>-000004","USD","100.00","100.00"
+"Sun Mar 22","PAY-<year>-000004","INV-PL-C","Local Client","India","NEFT","UTR-MULTI","INR","500.00","5.88"
+"Sun Mar 22","PAY-<year>-000003","INV-PL-B","Local Client","India","NEFT","UTR-MULTI","INR","1,000.00","11.76"
+"Fri Mar 20","PAY-<year>-000006","INV-PL-C","Local Client","India","BANK_TRANSFER","REF-<year>-000005","INR","100.00","1.18"
+"Fri Mar 20","PAY-PL-DUP","INV-PL-A","Local Client","India","BANK_TRANSFER","REF-<year>-000003","INR","10.00","0.12"
+"Total","","","","","","","","0.00","118.94""
+`;
+
+exports[`list and export CSV export for a date range 1`] = `
+""Date","Payment #","Invoice #","Client","Location","Mode","Reference","Currency","Amount","Amount (USD)"
+"Tue Mar 31","PAY-<year>-000005","INV-PL-USD","Export Client","India","WIRE_TRANSFER","REF-<year>-000004","USD","100.00","100.00"
+"Sun Mar 22","PAY-<year>-000004","INV-PL-C","Local Client","India","NEFT","UTR-MULTI","INR","500.00","5.88"
+"Sun Mar 22","PAY-<year>-000003","INV-PL-B","Local Client","India","NEFT","UTR-MULTI","INR","1,000.00","11.76"
+"Total","","","","","","","","0.00","117.64""
+`;
+
+exports[`list and export list by client 1`] = `
+[
+  [
+    "PAY-<year>-000005",
+    "INV-PL-USD",
+    "100.00",
+  ],
+]
+`;
+
+exports[`list and export list by invoice 1`] = `
+[
+  [
+    "PAY-<year>-000003",
+    "INV-PL-B",
+    "1000.00",
+  ],
+]
+`;
+
+exports[`list and export list by mode 1`] = `
+[
+  [
+    "PAY-<year>-000004",
+    "INV-PL-C",
+    "500.00",
+  ],
+  [
+    "PAY-<year>-000003",
+    "INV-PL-B",
+    "1000.00",
+  ],
+]
+`;
+
+exports[`list and export list search 1`] = `
+[
+  [
+    "PAY-<year>-000004",
+    "INV-PL-C",
+    "500.00",
+  ],
+  [
+    "PAY-<year>-000003",
+    "INV-PL-B",
+    "1000.00",
+  ],
+]
+`;
+
+exports[`lookups invoice options exclude cancelled invoices 1`] = `
+{
+  "data": [
+    {
+      "balance_outstanding": "100.00",
+      "candidate_name": "Asha Rao",
+      "client_id": 2,
+      "client_name": "Export Client",
+      "currency": "USD",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "id": 4,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-PL-USD",
+      "invoice_status": "GENERATED",
+      "job_title": "Engineer",
+      "payment_received_amount": "0.00",
+      "placement_code": null,
+      "region_id": 1,
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "subtotal": "100.00",
+      "total_amount": "100.00",
+    },
+    {
+      "balance_outstanding": "1000.00",
+      "candidate_name": "Asha Rao",
+      "client_id": 1,
+      "client_name": "Local Client",
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "id": 3,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-PL-C",
+      "invoice_status": "GENERATED",
+      "job_title": "Engineer",
+      "payment_received_amount": "0.00",
+      "placement_code": null,
+      "region_id": 1,
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "subtotal": "1000.00",
+      "total_amount": "1000.00",
+    },
+    {
+      "balance_outstanding": "1000.00",
+      "candidate_name": "Asha Rao",
+      "client_id": 1,
+      "client_name": "Local Client",
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "id": 2,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-PL-B",
+      "invoice_status": "GENERATED",
+      "job_title": "Engineer",
+      "payment_received_amount": "0.00",
+      "placement_code": null,
+      "region_id": 1,
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "subtotal": "1000.00",
+      "total_amount": "1000.00",
+    },
+    {
+      "balance_outstanding": "1000.00",
+      "candidate_name": "Asha Rao",
+      "client_id": 1,
+      "client_name": "Local Client",
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "id": 1,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-PL-A",
+      "invoice_status": "GENERATED",
+      "job_title": "Engineer",
+      "payment_received_amount": "0.00",
+      "placement_code": null,
+      "region_id": 1,
+      "region_name": "India",
+      "region_tds_applicable": true,
+      "subtotal": "1000.00",
+      "total_amount": "1000.00",
+    },
+  ],
+  "success": true,
+}
+`;
+
+exports[`lookups next code 1`] = `
+{
+  "data": {
+    "payment_code": "PAY-<year>-000001",
+    "reference_number": "REF-<year>-000001",
+  },
+  "success": true,
+}
+`;
+
+exports[`receipts an amount left blank pays the full net balance 1`] = `
+{
+  "data": {
+    "invoices": [
+      {
+        "amount_base": "8400.00",
+        "balance_outstanding": "0.00",
+        "bill_rate": "100.00",
+        "bill_to_region_id": null,
+        "billing_period_end": null,
+        "billing_period_start": null,
+        "client_id": 2,
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "USD",
+        "due_date": "2026-04-14T00:00:00.000Z",
+        "exchange_rate": "84.00000000",
+        "hours_or_units": "1.00",
+        "id": 4,
+        "invoice_date": "2026-03-15T00:00:00.000Z",
+        "invoice_number": "INV-PL-USD",
+        "invoice_status": "PAID",
+        "invoice_template": "CLASSIC",
+        "invoice_template_id": null,
+        "invoice_template_name": null,
+        "invoice_template_snapshot_json": {},
+        "invoice_type": "CLIENT",
+        "notes": null,
+        "payment_received_amount": "100.00",
+        "placement_id": 2,
+        "quickbooks_invoice_id": null,
+        "quickbooks_sync_status": "NOT_SYNCED",
+        "region_id": 1,
+        "sent_at": null,
+        "subtotal": "100.00",
+        "tax_amount": "0.00",
+        "tax_lines_json": [],
+        "template_custom_fields_json": [],
+        "tenant_id": 1,
+        "total_amount": "100.00",
+        "updated_at": "<timestamp>",
+      },
+    ],
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "100.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "USD",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 4,
+      "invoice_id": 4,
+      "notes": null,
+      "payment_code": "PAY-<year>-000005",
+      "payment_date": "2026-03-31T00:00:00.000Z",
+      "payment_mode": "WIRE_TRANSFER",
+      "reference_number": "REF-<year>-000004",
+      "tds_amount": "0.00",
+      "tds_applicable": false,
+      "tds_percent": null,
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+    "payments": [
+      {
+        "amount_in_base_currency": null,
+        "amount_received": "100.00",
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "USD",
+        "exchange_rate": null,
+        "fx_gain_loss": "0.00",
+        "id": 4,
+        "invoice_id": 4,
+        "notes": null,
+        "payment_code": "PAY-<year>-000005",
+        "payment_date": "2026-03-31T00:00:00.000Z",
+        "payment_mode": "WIRE_TRANSFER",
+        "reference_number": "REF-<year>-000004",
+        "tds_amount": "0.00",
+        "tds_applicable": false,
+        "tds_percent": null,
+        "tenant_id": 1,
+        "updated_at": "<timestamp>",
+      },
+    ],
+  },
+  "message": "Payment created successfully",
+  "success": true,
+}
+`;
+
+exports[`receipts an amount left blank pays the full net balance: ledger 1`] = `
+[
+  {
+    "account_code": "1000",
+    "cr": 0,
+    "dr": 8500,
+  },
+  {
+    "account_code": "1100",
+    "cr": 8400,
+    "dr": 0,
+  },
+  {
+    "account_code": "4900",
+    "cr": 100,
+    "dr": 0,
+  },
+]
+`;
+
+exports[`receipts deleting a missing payment 1`] = `
+{
+  "body": {
+    "message": "Payment not found",
+    "success": false,
+  },
+  "status": 404,
+}
+`;
+
+exports[`receipts moving a payment to another invoice recalculates both 1`] = `
+{
+  "data": {
+    "invoice": {
+      "amount_base": "1000.00",
+      "balance_outstanding": "400.00",
+      "bill_rate": "1000.00",
+      "bill_to_region_id": null,
+      "billing_period_end": null,
+      "billing_period_start": null,
+      "client_id": 1,
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "due_date": "2026-04-14T00:00:00.000Z",
+      "exchange_rate": "1.00000000",
+      "hours_or_units": "1.00",
+      "id": 3,
+      "invoice_date": "2026-03-15T00:00:00.000Z",
+      "invoice_number": "INV-PL-C",
+      "invoice_status": "PARTIALLY_PAID",
+      "invoice_template": "CLASSIC",
+      "invoice_template_id": null,
+      "invoice_template_name": null,
+      "invoice_template_snapshot_json": {},
+      "invoice_type": "CLIENT",
+      "notes": null,
+      "payment_received_amount": "600.00",
+      "placement_id": 1,
+      "quickbooks_invoice_id": null,
+      "quickbooks_sync_status": "NOT_SYNCED",
+      "region_id": 1,
+      "sent_at": null,
+      "subtotal": "1000.00",
+      "tax_amount": "0.00",
+      "tax_lines_json": [],
+      "template_custom_fields_json": [],
+      "tenant_id": 1,
+      "total_amount": "1000.00",
+      "updated_at": "<timestamp>",
+    },
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "100.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 5,
+      "invoice_id": 3,
+      "notes": null,
+      "payment_code": "PAY-<year>-000006",
+      "payment_date": "2026-03-20T00:00:00.000Z",
+      "payment_mode": "BANK_TRANSFER",
+      "reference_number": "REF-<year>-000005",
+      "tds_amount": "0.00",
+      "tds_applicable": false,
+      "tds_percent": null,
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+  },
+  "message": "Payment updated successfully",
+  "success": true,
+}
+`;
+
+exports[`receipts moving a payment to another invoice recalculates both: to a cancelled invoice 1`] = `
+{
+  "body": {
+    "message": "Cannot attach payment to a cancelled invoice",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`receipts one receipt across several invoices settles them in order 1`] = `
+{
+  "data": {
+    "invoices": [
+      {
+        "amount_base": "1000.00",
+        "balance_outstanding": "0.00",
+        "bill_rate": "1000.00",
+        "bill_to_region_id": null,
+        "billing_period_end": null,
+        "billing_period_start": null,
+        "client_id": 1,
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "due_date": "2026-04-14T00:00:00.000Z",
+        "exchange_rate": "1.00000000",
+        "hours_or_units": "1.00",
+        "id": 2,
+        "invoice_date": "2026-03-15T00:00:00.000Z",
+        "invoice_number": "INV-PL-B",
+        "invoice_status": "PAID",
+        "invoice_template": "CLASSIC",
+        "invoice_template_id": null,
+        "invoice_template_name": null,
+        "invoice_template_snapshot_json": {},
+        "invoice_type": "CLIENT",
+        "notes": null,
+        "payment_received_amount": "1000.00",
+        "placement_id": 1,
+        "quickbooks_invoice_id": null,
+        "quickbooks_sync_status": "NOT_SYNCED",
+        "region_id": 1,
+        "sent_at": null,
+        "subtotal": "1000.00",
+        "tax_amount": "0.00",
+        "tax_lines_json": [],
+        "template_custom_fields_json": [],
+        "tenant_id": 1,
+        "total_amount": "1000.00",
+        "updated_at": "<timestamp>",
+      },
+      {
+        "amount_base": "1000.00",
+        "balance_outstanding": "500.00",
+        "bill_rate": "1000.00",
+        "bill_to_region_id": null,
+        "billing_period_end": null,
+        "billing_period_start": null,
+        "client_id": 1,
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "due_date": "2026-04-14T00:00:00.000Z",
+        "exchange_rate": "1.00000000",
+        "hours_or_units": "1.00",
+        "id": 3,
+        "invoice_date": "2026-03-15T00:00:00.000Z",
+        "invoice_number": "INV-PL-C",
+        "invoice_status": "PARTIALLY_PAID",
+        "invoice_template": "CLASSIC",
+        "invoice_template_id": null,
+        "invoice_template_name": null,
+        "invoice_template_snapshot_json": {},
+        "invoice_type": "CLIENT",
+        "notes": null,
+        "payment_received_amount": "500.00",
+        "placement_id": 1,
+        "quickbooks_invoice_id": null,
+        "quickbooks_sync_status": "NOT_SYNCED",
+        "region_id": 1,
+        "sent_at": null,
+        "subtotal": "1000.00",
+        "tax_amount": "0.00",
+        "tax_lines_json": [],
+        "template_custom_fields_json": [],
+        "tenant_id": 1,
+        "total_amount": "1000.00",
+        "updated_at": "<timestamp>",
+      },
+    ],
+    "payment": {
+      "amount_in_base_currency": null,
+      "amount_received": "1000.00",
+      "created_at": "<timestamp>",
+      "created_by": 1,
+      "currency": "INR",
+      "exchange_rate": null,
+      "fx_gain_loss": "0.00",
+      "id": 2,
+      "invoice_id": 2,
+      "notes": null,
+      "payment_code": "PAY-<year>-000003",
+      "payment_date": "2026-03-22T00:00:00.000Z",
+      "payment_mode": "NEFT",
+      "reference_number": "UTR-MULTI",
+      "tds_amount": "0.00",
+      "tds_applicable": false,
+      "tds_percent": null,
+      "tenant_id": 1,
+      "updated_at": "<timestamp>",
+    },
+    "payments": [
+      {
+        "amount_in_base_currency": null,
+        "amount_received": "1000.00",
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "exchange_rate": null,
+        "fx_gain_loss": "0.00",
+        "id": 2,
+        "invoice_id": 2,
+        "notes": null,
+        "payment_code": "PAY-<year>-000003",
+        "payment_date": "2026-03-22T00:00:00.000Z",
+        "payment_mode": "NEFT",
+        "reference_number": "UTR-MULTI",
+        "tds_amount": "0.00",
+        "tds_applicable": false,
+        "tds_percent": null,
+        "tenant_id": 1,
+        "updated_at": "<timestamp>",
+      },
+      {
+        "amount_in_base_currency": null,
+        "amount_received": "500.00",
+        "created_at": "<timestamp>",
+        "created_by": 1,
+        "currency": "INR",
+        "exchange_rate": null,
+        "fx_gain_loss": "0.00",
+        "id": 3,
+        "invoice_id": 3,
+        "notes": null,
+        "payment_code": "PAY-<year>-000004",
+        "payment_date": "2026-03-22T00:00:00.000Z",
+        "payment_mode": "NEFT",
+        "reference_number": "UTR-MULTI",
+        "tds_amount": "0.00",
+        "tds_applicable": false,
+        "tds_percent": null,
+        "tenant_id": 1,
+        "updated_at": "<timestamp>",
+      },
+    ],
+  },
+  "message": "Payment created successfully",
+  "success": true,
+}
+`;
+
+exports[`receipts updating a missing payment 1`] = `
+{
+  "body": {
+    "message": "Payment not found",
+    "success": false,
+  },
+  "status": 404,
+}
+`;
+
+exports[`validation TDS without a percentage 1`] = `
+{
+  "body": {
+    "message": "TDS percentage is required when TDS is applicable",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation cancelled invoice 1`] = `
+{
+  "body": {
+    "message": "Cannot add payment to a cancelled invoice",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation duplicate payment code 1`] = `
+{
+  "body": {
+    "message": "Payment code already exists",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation invalid mode 1`] = `
+{
+  "body": {
+    "message": "Invalid payment mode",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation missing invoice 1`] = `
+{
+  "body": {
+    "message": "Invoice 999999 not found",
+    "success": false,
+  },
+  "status": 404,
+}
+`;
+
+exports[`validation mixed currencies 1`] = `
+{
+  "body": {
+    "message": "Selected invoices must use the same currency for a single payment",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation more than the balance 1`] = `
+{
+  "body": {
+    "message": "Amount cannot exceed current net receivable of 1000.00",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation no date 1`] = `
+{
+  "body": {
+    "message": "At least one invoice and payment date are required",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation no invoice 1`] = `
+{
+  "body": {
+    "message": "At least one invoice and payment date are required",
+    "success": false,
+  },
+  "status": 400,
+}
+`;
+
+exports[`validation zero amount 1`] = `
+{
+  "body": {
+    "message": "Amount received or TDS amount must be greater than zero",
+    "success": false,
+  },
+  "status": 400,
+}
+`;

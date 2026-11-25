@@ -9,6 +9,7 @@ import RegionsPage from './RegionsPage'
 import UsersPage from './UsersPage'
 import AuditLogsPage from './AuditLogsPage'
 import CurrenciesTab from './settings/CurrenciesTab'
+import BrandingTab from './settings/BrandingTab'
 import NumberingTab from './settings/NumberingTab'
 import NotificationsTab from './settings/NotificationsTab'
 import EmailTemplatesTab from './settings/EmailTemplatesTab'
@@ -22,6 +23,7 @@ const ADMINS = [ROLES.SUPER_ADMIN, ROLES.ADMIN]
 // Each tab: key (URL segment), label, gating roles, and how it renders.
 const TABS = [
   { key: 'organization', label: 'Organization', roles: FINANCE, render: () => <RegionsPage /> },
+  { key: 'branding', label: 'Branding', roles: FINANCE, render: () => <BrandingTab /> },
   { key: 'currencies', label: 'Currencies & Rates', roles: FINANCE, render: () => <CurrenciesTab /> },
   { key: 'numbering', label: 'Numbering', roles: FINANCE, render: () => <NumberingTab /> },
   { key: 'tax', label: 'Tax & Rates', roles: FINANCE, render: () => <TaxTab /> },

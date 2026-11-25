@@ -4,7 +4,7 @@ const { runWithTenant } = require("../../config/tenantContext");
 const mailer = require("./mailer");
 const invoiceQuery = require("./invoiceQuery");
 const { renderInvoicePdfBuffer, invoicePdfFileName } = require("../../utils/invoicePdfGenerator");
-const { ensureEmailSchema } = require("../../modules/email/ensureEmailSchema");
+const { getBranding } = require("../branding/brandingService");
 
 const MAX_ATTEMPTS = 3;
 const BATCH_SIZE = 20;
@@ -39,7 +39,7 @@ async function attachmentsFor(row, db = pool) {
 
   return [{
     filename: invoicePdfFileName(invoice),
-    content: await renderInvoicePdfBuffer(invoice),
+    content: await renderInvoicePdfBuffer(invoice, await getBranding(db, invoice.region_id)),
     contentType: "application/pdf",
   }];
 }
@@ -47,6 +47,7 @@ async function attachmentsFor(row, db = pool) {
 async function deliver(row, db = pool, tenantId) {
   try {
     const result = await mailer.send({
+      fromName: (await getBranding(db)).senderName,
       to: row.to_email,
       subject: row.subject,
       html: row.body_html,
@@ -97,7 +98,6 @@ async function runOnceForTenant(tenantId, { limit = BATCH_SIZE } = {}) {
     );
 
     return await runWithTenant(client, tenantId, async () => {
-      await ensureEmailSchema(client, tenantId);
 
       const batch = await claimBatch(limit, client, tenantId);
 

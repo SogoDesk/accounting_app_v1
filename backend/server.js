@@ -28,7 +28,9 @@ app.use(
 );
 
 app.use(helmet());
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "test") {
+  app.use(morgan("dev"));
+}
 
 app.use(
   rateLimit({
@@ -101,7 +103,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-const startServer = async () => {
+// Listening and the background schedulers live in start(), so tests can load
+// the app with require("./server") without opening a port or starting timers.
+const start = async () => {
   try {
     await pool.testDbConnection();
 
@@ -125,4 +129,9 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (require.main === module) {
+  start();
+}
+
+module.exports = app;
+module.exports.start = start;

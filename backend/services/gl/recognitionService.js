@@ -279,7 +279,7 @@ async function runDue(params) {
           `INSERT INTO recognition_runs
              (schedule_id, period_no, run_date, amount, entry_id)
            VALUES ($1,$2,$3,$4,$5)
-           ON CONFLICT (schedule_id, period_no) DO NOTHING`,
+           ON CONFLICT (tenant_id, schedule_id, period_no) DO NOTHING`,
           [s.id, n, periodDate, amount, entry.id],
         );
 

@@ -1,6 +1,6 @@
 const pool = require("../config/db");
 const { getTenantClient } = require("../config/tenantContext");
-const { ensureSettingsSchema, PERMISSION_KEYS } = require("../modules/settings/ensureSettingsSchema");
+const { PERMISSION_KEYS } = require("../modules/settings/permissions");
 const { auditLog } = require("../middleware/auditMiddleware");
 
 // Role name is used directly by authorize() and the JWT, so keep it a safe,
@@ -10,7 +10,6 @@ const normRoleName = (v) =>
 
 const getAllRoles = async (_req, res) => {
   try {
-    await ensureSettingsSchema();
     const result = await pool.query(
       `SELECT r.id, r.role_name, r.description, r.status, r.is_system,
               COUNT(DISTINCT u.id)::int AS user_count,
@@ -30,7 +29,6 @@ const getAllRoles = async (_req, res) => {
 
 const createRole = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const role_name = normRoleName(req.body.role_name);
     const description = String(req.body.description || "").trim() || null;
     const permissions = Array.isArray(req.body.permissions)
@@ -78,7 +76,6 @@ const createRole = async (req, res) => {
 
 const updateRole = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const { id } = req.params;
     const existing = await pool.query(`SELECT id, role_name, is_system FROM roles WHERE id = $1`, [id]);
     if (!existing.rows.length) return res.status(404).json({ success: false, message: "Role not found" });
@@ -132,7 +129,6 @@ const updateRole = async (req, res) => {
 
 const deleteRole = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const { id } = req.params;
     const existing = await pool.query(`SELECT id, is_system FROM roles WHERE id = $1`, [id]);
     if (!existing.rows.length) return res.status(404).json({ success: false, message: "Role not found" });

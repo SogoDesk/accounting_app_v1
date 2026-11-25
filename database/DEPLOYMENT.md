@@ -1,5 +1,10 @@
 # Deployment & Database Changes — On-Prem
 
+> **Migrations now run through node-pg-migrate** (see `database/README.md`).
+> The psql commands in section 1 are kept for history; those files now live in
+> `database/migrations/legacy/`. A server that already has them applied adopts
+> the new tool once with `npm run migrate -- up --fake`, after a backup.
+
 This document describes how to deploy the current code to the on-prem server
 (`https://books.sogodesk.com/`) and, critically, **the database changes that
 must be applied** so the running server behaves exactly like local.
@@ -33,10 +38,10 @@ cd /path/to/accounting_app
 DB=<db_name>          # e.g. accounting_db
 USER=<db_user>        # e.g. postgres
 
-psql -U "$USER" -d "$DB" -f database/migrations/011_workforce_billing_types.sql
-psql -U "$USER" -d "$DB" -f database/migrations/012_candidate_compliance.sql
-psql -U "$USER" -d "$DB" -f database/migrations/013_timesheets.sql
-psql -U "$USER" -d "$DB" -f database/migrations/014_settings.sql
+psql -U "$USER" -d "$DB" -f database/migrations/legacy/011_workforce_billing_types.sql
+psql -U "$USER" -d "$DB" -f database/migrations/legacy/012_candidate_compliance.sql
+psql -U "$USER" -d "$DB" -f database/migrations/legacy/013_timesheets.sql
+psql -U "$USER" -d "$DB" -f database/migrations/legacy/014_settings.sql
 ```
 
 What each one does:
@@ -77,11 +82,9 @@ Create the database and run **all** migrations in order:
 
 ```bash
 createdb accounting_db
-for f in database/migrations/*.sql; do
-  psql -U postgres -d accounting_db -f "$f"
-done
-# then create the first admin user:
-cd backend && npm run seed
+cd backend
+npm run migrate:up      # builds the schema from database/migrations/pgm
+npm run seed            # first admin user
 ```
 
 ---

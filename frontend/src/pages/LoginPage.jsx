@@ -8,7 +8,6 @@ import {
   isValidSlug,
   normalizeSlug,
 } from "../utils/tenant";
-import logo from "../assets/tetriq-no-bg.png";
 import "./login.css";
 
 const SunIcon = () => (
@@ -140,7 +139,10 @@ function LoginPage() {
           }}
         >
           <div className="login-logo">
-            <img className="logo-image" src={logo} alt="TetriQ Solutions" />
+            <div className="product-mark" aria-label="SogoDesk Books">
+              <span className="product-mark-badge" aria-hidden="true">SD</span>
+              <span className="product-mark-name">SogoDesk Books</span>
+            </div>
           </div>
 
           <h1>Accounting</h1>
@@ -215,7 +217,6 @@ function LoginPage() {
             </button>
           </form>
 
-          <div className="login-footnote">Powered by TetriQ Solutions.</div>
         </div>
       </div>
     </div>

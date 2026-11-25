@@ -3,7 +3,7 @@ const pool = require("../../config/db");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { createInvite } = require("./inviteService");
-const { ensureEmailSchema } = require("../../modules/email/ensureEmailSchema");
+const { seedEmailDefaults } = require("../../modules/email/defaultTemplates");
 
 // Must stay compatible with the login page, which lowercases the code and
 // accepts only letters, digits and inner hyphens.
@@ -268,8 +268,8 @@ const provisionTenant = async ({
 
     await createDocumentNumbering(db, tenantId);
 
-    // Create email defaults using the same transaction connection.
-    await ensureEmailSchema(db, tenantId);
+    // Default email templates and reminder settings, in the same transaction.
+    await seedEmailDefaults(db, tenantId);
 
     // Create the first tenant administrator. They are INACTIVE with an
     // unusable password until they accept the emailed invitation.

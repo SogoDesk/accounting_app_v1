@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePlatformAuth } from '../../context/PlatformAuthContext'
-import logo from '../../assets/tetriq-no-bg.png'
 import '../login.css'
 
 // Sign-in for the single platform operator account. Unlike the company login
@@ -43,7 +42,10 @@ export default function PlatformLoginPage() {
       <div className="login-shell">
         <div className="login-card">
           <div className="login-logo">
-            <img className="logo-image" src={logo} alt="TetriQ Solutions" />
+            <div className="product-mark" aria-label="SogoDesk Books">
+              <span className="product-mark-badge" aria-hidden="true">SD</span>
+              <span className="product-mark-name">SogoDesk Books</span>
+            </div>
           </div>
 
           <h1>Platform Console</h1>

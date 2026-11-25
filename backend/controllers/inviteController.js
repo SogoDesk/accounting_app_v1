@@ -1,10 +1,8 @@
 const { findInvite, acceptInvite } = require("../services/tenants/inviteService");
-const { ensurePlatformSchema } = require("../services/platform/ensurePlatformSchema");
 
 // GET /api/auth/invite/:token — show who the invite is for (public)
 const getInvite = async (req, res) => {
   try {
-    await ensurePlatformSchema();
     const { invite, error } = await findInvite(req.params.token);
     if (error) return res.status(410).json({ success: false, message: error });
 
@@ -36,7 +34,6 @@ const accept = async (req, res) => {
   }
 
   try {
-    await ensurePlatformSchema();
     const { tenantCode } = await acceptInvite(token, password);
     return res.json({
       success: true,

@@ -81,7 +81,7 @@ async function main() {
       // ROLLBACK or subsequent rows would reference a rolled-back category. Inserts
       // are idempotent (ON CONFLICT), so independent commit is safe here.
       const acct = (await pool.query("SELECT id FROM chart_of_accounts WHERE account_code='6000'")).rows[0]?.id || null;
-      const ins = await pool.query("INSERT INTO expense_categories (name, gl_account_id) VALUES ($1,$2) ON CONFLICT (name) DO UPDATE SET name=EXCLUDED.name RETURNING id", [name, acct]);
+      const ins = await pool.query("INSERT INTO expense_categories (name, gl_account_id) VALUES ($1,$2) ON CONFLICT (tenant_id, name) DO UPDATE SET name=EXCLUDED.name RETURNING id", [name, acct]);
       catMap.set(key, ins.rows[0].id); return ins.rows[0].id;
     }
 
@@ -94,7 +94,7 @@ async function main() {
       if (pmMap.has(key)) return pmMap.get(key);
       const { type, code } = classifyMethod(name);
       const acct = (await pool.query("SELECT id FROM chart_of_accounts WHERE account_code=$1", [code])).rows[0]?.id || null;
-      const ins = await pool.query("INSERT INTO payment_methods (name, method_type, gl_account_id) VALUES ($1,$2,$3) ON CONFLICT (name) DO UPDATE SET name=EXCLUDED.name RETURNING id", [name, type, acct]);
+      const ins = await pool.query("INSERT INTO payment_methods (name, method_type, gl_account_id) VALUES ($1,$2,$3) ON CONFLICT (tenant_id, name) DO UPDATE SET name=EXCLUDED.name RETURNING id", [name, type, acct]);
       pmMap.set(key, ins.rows[0].id); return ins.rows[0].id;
     }
 

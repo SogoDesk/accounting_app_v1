@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 const { getTenantClient } = require("../config/tenantContext");
 const { auditLog } = require("../middleware/auditMiddleware");
-const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 const { recalculateBillBalances } = require("./billController");
 const glPosting = require("../services/gl/postingService");
 const { generateVendorPaymentCode, generateVendorPaymentReference } = require("../utils/codeGenerator");
@@ -61,7 +60,6 @@ const fetchBillOptions = async (db) => db.query(
 const getAllVendorPayments = async (req, res) => {
   try {
     const db = tenantDb();
-    await ensureApSchema(db);
     const { search = "", bill_id = "", vendor_id = "", payment_method = "" } = req.query;
     const conditions = [];
     const values = [];
@@ -132,7 +130,6 @@ const getAllVendorPayments = async (req, res) => {
 const getVendorPaymentById = async (req, res) => {
   try {
     const db = tenantDb();
-    await ensureApSchema(db);
     const result = await db.query(
       `
       SELECT
@@ -168,7 +165,6 @@ const getVendorPaymentById = async (req, res) => {
 const getVendorPaymentBillOptions = async (req, res) => {
   try {
     const db = tenantDb();
-    await ensureApSchema(db);
     const result = await fetchBillOptions(db);
     return res.json({ success: true, data: result.rows });
   } catch (error) {
@@ -180,7 +176,6 @@ const getVendorPaymentBillOptions = async (req, res) => {
 const getNextVendorPaymentCode = async (req, res) => {
   try {
     const db = tenantDb();
-    await ensureApSchema(db);
     const [payment_code, reference_number] = await Promise.all([
       generateVendorPaymentCode(db),
       generateVendorPaymentReference(db),
@@ -195,7 +190,6 @@ const createVendorPayment = async (req, res) => {
   const db = tenantDb();
   let transactionStarted = false;
   try {
-    await ensureApSchema(db);
     const {
       payment_code,
       bill_id,
@@ -359,7 +353,6 @@ const updateVendorPayment = async (req, res) => {
   const db = tenantDb();
   let transactionStarted = false;
   try {
-    await ensureApSchema(db);
     const { id } = req.params;
     const existingResult = await db.query(`SELECT * FROM vendor_payments WHERE id = $1 LIMIT 1`, [Number(id)]);
     if (!existingResult.rows.length) {
@@ -457,7 +450,6 @@ const deleteVendorPayment = async (req, res) => {
   const db = tenantDb();
   let transactionStarted = false;
   try {
-    await ensureApSchema(db);
     const { id } = req.params;
     const existingResult = await db.query(
       `SELECT vp.*, b.region_id FROM vendor_payments vp JOIN bills b ON b.id = vp.bill_id WHERE vp.id = $1 LIMIT 1`,
@@ -501,7 +493,6 @@ const deleteVendorPayment = async (req, res) => {
 const downloadVendorPaymentReceipt = async (req, res) => {
   try {
     const db = tenantDb();
-    await ensureApSchema(db);
     const result = await db.query(
       `SELECT vp.*, b.bill_number, b.bill_status, b.total_amount AS bill_total_amount,
               b.balance_outstanding AS bill_balance_outstanding, b.currency, b.region_id,

@@ -920,7 +920,7 @@ export default function InvoicesPage() {
       : reportingCurrency
 
     // When a single entity is scoped and its book (functional) currency differs
-    // from what it invoices in (TetriQ-UK bills USD, books GBP), also total the
+    // from what it invoices in (e.g. a UK entity that bills USD and books GBP), also total the
     // book-currency value so both show side by side. GBP figures use each
     // invoice's stored rate/base, matching the ledger's per-date valuation.
     const functionalCurrency = isRegionScoped

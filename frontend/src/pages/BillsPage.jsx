@@ -36,7 +36,7 @@ const BILL_STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'PARTIALLY_
 
 // Currencies to offer for a region: the entity's book (functional) currency, its
 // suggested default, the region's country currency, any extras (e.g. the chosen
-// vendor's currency), plus USD (group/reporting). For TetriQ-UK this is GBP + USD.
+// vendor's currency), plus USD (group/reporting). For a UK entity this is GBP + USD.
 function regionCurrencyOptions(region, extras = []) {
   const list = []
   const add = (code) => {
@@ -565,7 +565,7 @@ export default function BillsPage() {
         ...prev,
         region_id: nextRegionId,
         vendor_id: keepVendor ? prev.vendor_id : '',
-        // Bills (AP) default to the entity's book currency — GBP for TetriQ-UK.
+        // Bills (AP) default to the entity's book currency — GBP for a UK entity.
         currency: region?.functional_currency || region?.default_currency || prev.currency,
       }
     })

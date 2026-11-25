@@ -124,6 +124,7 @@ const status = () => ({
 
 // Send or locally generate an email.
 async function send({
+  fromName,
   to,
   subject,
   html,
@@ -138,7 +139,10 @@ async function send({
     throw new Error("Subject is required");
   }
 
-  const from = fromAddress() || "no-reply@localhost";
+  const address = fromAddress() || "no-reply@localhost";
+  // The display name is the tenant's sender name (branding); the address is
+  // the platform's configured EMAIL_FROM.
+  const from = fromName ? { name: String(fromName), address } : address;
 
   const message = {
     from,

@@ -19,11 +19,6 @@ const inviteLimiter = rateLimit({
   message: { success: false, message: "Too many attempts. Try again later." },
 });
 
-console.log("login:", typeof authController.login);
-console.log("getMe:", typeof authController.getMe);
-console.log("changePassword:", typeof authController.changePassword);
-console.log("authenticate:", typeof authenticate);
-console.log("tenantMiddleware:", typeof tenantMiddleware);
 
 // 1. Public login route (no authentication required)
 router.post("/login", authController.login);

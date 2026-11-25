@@ -7,37 +7,23 @@
 //   req.allowedEntityIds    — int[]   of owning entities (== regions.id) the
 //                             user can see/act on. Use as `entity_id = ANY($n)`.
 //   req.allowedAccessByLocation — Map(locationId -> 'VIEW'|'EDIT'|'POST'|'ADMIN')
-//   req.scopeEnforced       — true when scoping data was loaded; false means the
-//                             RBAC tables are not migrated yet (fail-open so the
-//                             app keeps working pre-rollout of migration 005).
+//   req.scopeEnforced       — always true once this middleware has run. Scoping
+//                             is never skipped: the RBAC tables are part of the
+//                             baseline migration, and a database without them is
+//                             an error, not a reason to allow everything.
 //
-// Controllers append `AND entity_id = ANY($n)` with req.allowedEntityIds when
-// scopeEnforced is true, and reject writes whose target entity/location is not
-// in the allowed set. Never trust a body-supplied region_id/location_id.
+// Controllers append `AND entity_id = ANY($n)` with req.allowedEntityIds and
+// reject writes whose target entity/location is not in the allowed set. The
+// helpers below fail closed if this middleware did not run. Never trust a
+// body-supplied region_id/location_id.
 // =============================================================================
 
 const pool = require("../config/db");
-
-async function rbacReady(db = pool) {
-  const { rows } = await db.query(
-    "SELECT to_regclass('public.user_org_access') AS t",
-  );
-  return rows[0].t !== null;
-}
 
 const scopeAccess = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ success: false, message: "Unauthorized." });
-    }
-
-    // Graceful pre-migration behaviour: if RBAC isn't installed, don't enforce.
-    if (!(await rbacReady())) {
-      req.allowedLocationIds = null;
-      req.allowedEntityIds = null;
-      req.allowedAccessByLocation = new Map();
-      req.scopeEnforced = false;
-      return next();
     }
 
     const { rows } = await pool.query(
@@ -72,16 +58,26 @@ const scopeAccess = async (req, res, next) => {
 
 // Helper for controllers: may the caller write/post to this entity (region id)?
 const canActOnEntity = (req, entityId) => {
-  if (!req.scopeEnforced) return true; // pre-migration fail-open
-  if (!Array.isArray(req.allowedEntityIds)) return true;
+  if (!req.scopeEnforced || !Array.isArray(req.allowedEntityIds)) return false;
   return req.allowedEntityIds.includes(Number(entityId));
 };
 
 // Helper: may the caller POST/ADMIN to this specific location (org_unit id)?
 const canPostToLocation = (req, locationId) => {
-  if (!req.scopeEnforced) return true;
+  if (!req.scopeEnforced || !(req.allowedAccessByLocation instanceof Map)) return false;
   const access = req.allowedAccessByLocation.get(Number(locationId));
   return access === "POST" || access === "ADMIN";
 };
 
-module.exports = { scopeAccess, canActOnEntity, canPostToLocation };
+// The caller's scope in a form services can take without seeing `req`:
+//   userId      — the acting user (null for system jobs)
+//   canAct(id)  — may the caller act on this entity (region)?
+//   entityIds   — entities to filter lists by, or null for no filter
+const requestScope = (req) => ({
+  userId: req.user?.id || null,
+  canAct: (entityId) => canActOnEntity(req, entityId),
+  entityIds:
+    req.scopeEnforced && Array.isArray(req.allowedEntityIds) ? req.allowedEntityIds : null,
+});
+
+module.exports = { scopeAccess, canActOnEntity, canPostToLocation, requestScope };

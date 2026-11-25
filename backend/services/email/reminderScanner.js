@@ -3,7 +3,6 @@ const pool = require("../../config/db");
 const { runWithTenant } = require("../../config/tenantContext");
 const dispatcher = require("./dispatcher");
 const invoiceQuery = require("./invoiceQuery");
-const { ensureEmailSchema } = require("../../modules/email/ensureEmailSchema");
 
 const iso = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -80,7 +79,6 @@ async function scanForTenant(
   { today, dryRun },
   db,
 ) {
-  await ensureEmailSchema(db, tenantId);
 
   const { rows: settingsRows } = await db.query(
     `SELECT *

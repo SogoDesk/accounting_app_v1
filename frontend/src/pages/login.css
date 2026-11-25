@@ -182,6 +182,35 @@
           drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
 }
 
+/* Product mark on the pre-login pages. No company is known yet, so these
+   show the product (SogoDesk Books), never a customer's brand. */
+.product-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-mark-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  background: var(--accent, #1d4ed8);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+.product-mark-name {
+  font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
 .login-card h1 {
   font-size: 28px;
   text-align: center;

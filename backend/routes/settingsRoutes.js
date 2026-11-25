@@ -20,6 +20,9 @@ router.get("/my-permissions", authenticate, settingsController.getMyPermissions)
 router.get("/permission-catalog", authenticate, settingsController.getPermissionCatalog);
 
 // Company / reporting currency
+// Company name, logo and colours for the app shell: every signed-in user.
+router.get("/branding", settingsController.getCompanyBranding);
+
 router.get("/company", authenticate, settingsGuard, settingsController.getCompanySettings);
 router.put("/company", authenticate, settingsGuard, settingsController.updateCompanySettings);
 

@@ -15,7 +15,6 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
-const { ensureApSchema } = require("../modules/ap/ensureApSchema");
 
 // ---- date helpers (relative to today) --------------------------------------
 const fmt = (d) => d.toISOString().slice(0, 10);
@@ -47,7 +46,7 @@ async function upsert(db, table, conflictCol, row) {
 }
 
 async function seed() {
-  await ensureApSchema(); // make sure AP tables (vendors/bills/...) exist
+  // make sure AP tables (vendors/bills/...) exist
   const db = await pool.connect();
   try {
     await db.query("BEGIN");

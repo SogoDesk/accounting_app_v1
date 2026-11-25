@@ -5,6 +5,7 @@ const net = require("net");
 const dns = require("dns").promises;
 const path = require("path");
 const PDFDocument = require("pdfkit");
+const { DEFAULT_PRIMARY_COLOR, DEFAULT_ACCENT_COLOR } = require("../services/branding/brandingService");
 
 // SSRF guard: a region's logo_url is operator-supplied and fetched server-side
 // (following redirects), so block requests that resolve to private/loopback/
@@ -207,16 +208,8 @@ const resolveLogoSource = async (logoUrl) => {
   return resolveLocalLogoPath(normalized);
 };
 
-// Bundled brand logo, shown on every invoice whose entity hasn't uploaded its own.
-const DEFAULT_LOGO_PATH = path.resolve(__dirname, "..", "assets", "tetriq-logo.png");
-
-// Resolve a region's logo, falling back to the bundled TetriQ logo so invoices
-// are never logo-less.
-const resolveLogoWithFallback = async (logoUrl) => {
-  const resolved = await resolveLogoSource(logoUrl);
-  if (resolved) return resolved;
-  return fs.existsSync(DEFAULT_LOGO_PATH) ? DEFAULT_LOGO_PATH : null;
-};
+// There is deliberately no bundled default logo: an invoice shows the logo its
+// entity or company configured (see services/branding), or none.
 
 const ordinalDay = (day) => {
   if (day >= 11 && day <= 13) return `${day}th`;
@@ -416,15 +409,23 @@ const normalizeHexColor = (value, fallback) => {
   return /^#[0-9a-fA-F]{6}$/.test(withHash) ? withHash.toUpperCase() : fallback;
 };
 
+// A pale tint of a colour (mixed with white), for table header fills.
+const tint = (hex, amount = 0.88) => {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c) => Math.round(c + (255 - c) * amount);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(mix);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase()}`;
+};
+
 const paletteForTemplate = (invoice, template) => {
-  const primary = normalizeHexColor(invoice.invoice_brand_primary_color, "#00695C");
-  const accent = normalizeHexColor(invoice.invoice_brand_accent_color, "#00897B");
+  const primary = normalizeHexColor(invoice.invoice_brand_primary_color, DEFAULT_PRIMARY_COLOR);
+  const accent = normalizeHexColor(invoice.invoice_brand_accent_color, DEFAULT_ACCENT_COLOR);
 
   if (template === "EXECUTIVE") {
     return {
       titleColor: accent,
       borderColor: accent,
-      headerFill: "#E0F2F1",
+      headerFill: tint(accent),
       footerAccent: accent,
       textMuted: "#334155",
       headerFont: "Helvetica-Bold",
@@ -730,7 +731,25 @@ const newDocument = () =>
 const invoicePdfFileName = (invoice) =>
   `Invoice ${safeText(invoice.invoice_number, "invoice")}.pdf`;
 
-const drawInvoice = async (doc, invoice) => {
+// Fill the company name, address, logo, colours and footer an invoice row does
+// not carry from the tenant's branding (services/branding/brandingService.js).
+// Values on the invoice (its entity's own settings) always win.
+const applyBranding = (invoice, branding) => {
+  if (!branding) return invoice;
+  const pick = (own, brand) => (String(own ?? "").trim() ? own : brand);
+  return {
+    ...invoice,
+    company_name: pick(invoice.company_name, branding.name),
+    company_address: pick(invoice.company_address, branding.address),
+    logo_url: pick(invoice.logo_url, branding.logoUrl),
+    invoice_brand_primary_color: pick(invoice.invoice_brand_primary_color, branding.primaryColor),
+    invoice_brand_accent_color: pick(invoice.invoice_brand_accent_color, branding.accentColor),
+    invoice_brand_footer_note: pick(invoice.invoice_brand_footer_note, branding.footerNote),
+  };
+};
+
+const drawInvoice = async (doc, rawInvoice, branding) => {
+  const invoice = applyBranding(rawInvoice, branding);
   const line_items = buildNormalizedLineItems(invoice);
   const tax_lines = buildNormalizedTaxLines(invoice);
 
@@ -747,22 +766,23 @@ const drawInvoice = async (doc, invoice) => {
     total_amount,
     balance_outstanding: numeric(invoice.balance_outstanding) || total_amount,
     invoice_template: normalizeTemplate(invoice.invoice_template || invoice.region_invoice_template || "CLASSIC"),
-    _resolved_logo_source: await resolveLogoWithFallback(invoice.logo_url),
+    _resolved_logo_source: await resolveLogoSource(invoice.logo_url),
   };
 
   drawMultipleInvoice(doc, enrichedInvoice);
 };
 
-const generateInvoicePdf = async (invoice, res) => {
+// branding: from getBranding(db, invoice.region_id); optional.
+const generateInvoicePdf = async (invoice, res, branding = null) => {
   const doc = newDocument();
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="${invoicePdfFileName(invoice)}"`);
   doc.pipe(res);
-  await drawInvoice(doc, invoice);
+  await drawInvoice(doc, invoice, branding);
   doc.end();
 };
 
-const renderInvoicePdfBuffer = (invoice) =>
+const renderInvoicePdfBuffer = (invoice, branding = null) =>
   new Promise((resolve, reject) => {
     const doc = newDocument();
     const chunks = [];
@@ -770,7 +790,7 @@ const renderInvoicePdfBuffer = (invoice) =>
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    drawInvoice(doc, invoice)
+    drawInvoice(doc, invoice, branding)
       .then(() => doc.end())
       .catch(reject);
   });

@@ -1,13 +1,10 @@
 
 const pool = require("../config/db");
 const { getTenantClient, getTenantId } = require("../config/tenantContext");
-const {
-  ensureSettingsSchema,
-  PERMISSION_KEYS,
-} = require("../modules/settings/ensureSettingsSchema");
-const { ensureEmailSchema } = require("../modules/email/ensureEmailSchema");
+const { PERMISSION_KEYS } = require("../modules/settings/permissions");
 const { setManualRate } = require("../services/currency/rateService");
 const { auditLog } = require("../middleware/auditMiddleware");
+const { getBranding } = require("../services/branding/brandingService");
 
 const getTenantDb = () => {
   const db = getTenantClient();
@@ -30,15 +27,64 @@ const normCode = (c) => String(c || "").trim().toUpperCase();
 // ---------------------------------------------------------------------------
 // Company settings
 // ---------------------------------------------------------------------------
+// Company-wide branding fields (step 0.6). Each is optional; a request that
+// leaves one out keeps the stored value, and "" clears it.
+const BRANDING_FIELDS = {
+  display_name: (v) => (v.length <= 200 ? null : "Display name is too long"),
+  logo_url: (v) =>
+    v.length <= 1000 && (/^https?:\/\//i.test(v) || v.startsWith("/uploads/"))
+      ? null
+      : "Logo must be an http(s) URL or an /uploads/ path",
+  primary_color: (v) => (/^#[0-9A-Fa-f]{6}$/.test(v) ? null : "Primary colour must look like #111827"),
+  accent_color: (v) => (/^#[0-9A-Fa-f]{6}$/.test(v) ? null : "Accent colour must look like #1D4ED8"),
+  email_sender_name: (v) => (v.length <= 200 ? null : "Email sender name is too long"),
+};
+
+// The branding fields present in the body: { column: value | null }, or an error.
+const readBrandingFields = (body) => {
+  const values = {};
+  for (const [column, check] of Object.entries(BRANDING_FIELDS)) {
+    if (body[column] === undefined) continue;
+    const v = String(body[column] ?? "").trim();
+    if (!v) {
+      values[column] = null;
+      continue;
+    }
+    const error = check(v);
+    if (error) return { error };
+    values[column] = column.endsWith("_color") ? v.toUpperCase() : v;
+  }
+  return { values };
+};
+
+const COMPANY_COLUMNS = "id, group_currency, display_name, logo_url, primary_color, accent_color, email_sender_name, updated_at";
+
+// GET /api/settings/branding — the name, logo and colours the app shows for
+// this company. Any signed-in user may read it (the layout needs it).
+const getCompanyBranding = async (req, res) => {
+  try {
+    const branding = await getBranding(getTenantDb());
+    return res.json({
+      success: true,
+      data: {
+        name: branding.name,
+        logo_url: branding.logoUrl,
+        primary_color: branding.primaryColor,
+        accent_color: branding.accentColor,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 const getCompanySettings = async (req, res) => {
   try {
     const db = getTenantDb();
     const tenantId = getCurrentTenantId(req);
 
-    await ensureSettingsSchema(db);
-
     const { rows } = await db.query(
-      `SELECT id, group_currency, updated_at
+      `SELECT ${COMPANY_COLUMNS}
          FROM company_settings
         WHERE tenant_id = $1`,
       [tenantId],
@@ -73,16 +119,26 @@ const updateCompanySettings = async (req, res) => {
       });
     }
 
+    const branding = readBrandingFields(req.body);
+    if (branding.error) {
+      return res.status(400).json({ success: false, message: branding.error });
+    }
+    const brandingColumns = Object.keys(branding.values);
+
+    // Branding columns are written only when the request sent them.
+    const insertColumns = ["tenant_id", "id", "group_currency", ...brandingColumns, "updated_at"];
+    const insertValues = ["$1", "1", "$2", ...brandingColumns.map((_, i) => `$${i + 3}`), "now()"];
+    const updates = ["group_currency", ...brandingColumns]
+      .map((c) => `${c} = EXCLUDED.${c}`)
+      .concat("updated_at = now()");
+
     const { rows } = await db.query(
-      `INSERT INTO company_settings
-         (tenant_id, id, group_currency, updated_at)
-       VALUES ($1, 1, $2, now())
+      `INSERT INTO company_settings (${insertColumns.join(", ")})
+       VALUES (${insertValues.join(", ")})
        ON CONFLICT (tenant_id)
-       DO UPDATE SET
-         group_currency = EXCLUDED.group_currency,
-         updated_at = now()
-       RETURNING id, group_currency, updated_at`,
-      [tenantId, group_currency],
+       DO UPDATE SET ${updates.join(", ")}
+       RETURNING ${COMPANY_COLUMNS}`,
+      [tenantId, group_currency, ...Object.values(branding.values)],
     );
 
     await auditLog({
@@ -91,7 +147,7 @@ const updateCompanySettings = async (req, res) => {
       action: "UPDATE",
       entityType: "company_settings",
       entityId: 1,
-      newValues: { group_currency },
+      newValues: { group_currency, ...branding.values },
       ipAddress: req.ip,
     });
 
@@ -198,7 +254,6 @@ const getReminderSettings = async (req, res) => {
     const db = getTenantDb();
     const tenantId = getCurrentTenantId(req);
 
-    await ensureEmailSchema(db, tenantId);
 
     const { rows } = await db.query(
       `SELECT *
@@ -225,7 +280,6 @@ const updateReminderSettings = async (req, res) => {
     const db = getTenantDb();
     const tenantId = getCurrentTenantId(req);
 
-    await ensureEmailSchema(db, tenantId);
 
     const enabled = Boolean(req.body.enabled);
     const send_on_due = Boolean(req.body.send_on_due);
@@ -313,7 +367,6 @@ const listNumbering = async (_req, res) => {
   try {
     const db = getTenantDb();
 
-    await ensureSettingsSchema(db);
 
     const { rows } = await db.query(
       `SELECT doc_type, label, prefix, padding, include_year, updated_at
@@ -338,7 +391,6 @@ const updateNumbering = async (req, res) => {
     const db = getTenantDb();
     const tenantId = getCurrentTenantId(req);
 
-    await ensureSettingsSchema(db);
 
     const { doc_type } = req.params;
 
@@ -413,7 +465,6 @@ const listTaxRates = async (_req, res) => {
   try {
     const db = getTenantDb();
 
-    await ensureSettingsSchema(db);
 
     const { rows } = await db.query(
       `SELECT t.id, t.name, t.rate_percent, t.region_id,
@@ -440,7 +491,6 @@ const createTaxRate = async (req, res) => {
     const db = getTenantDb();
     const tenantId = getCurrentTenantId(req);
 
-    await ensureSettingsSchema(db);
 
     const name = String(req.body.name || "").trim();
     const rate_percent = Number(req.body.rate_percent);
@@ -494,7 +544,6 @@ const updateTaxRate = async (req, res) => {
   try {
     const db = getTenantDb();
 
-    await ensureSettingsSchema(db);
 
     const { id } = req.params;
     const name = String(req.body.name || "").trim();
@@ -563,7 +612,6 @@ const deleteTaxRate = async (req, res) => {
   try {
     const db = getTenantDb();
 
-    await ensureSettingsSchema(db);
 
     const { rows } = await db.query(
       `DELETE FROM tax_rates
@@ -605,7 +653,6 @@ const getMyPermissions = async (req, res) => {
   try {
     const db = getTenantDb();
 
-    await ensureSettingsSchema(db);
 
     const roleName = String(req.user?.role || "");
 
@@ -695,6 +742,7 @@ const getFiscalOverview = async (_req, res) => {
 };
 
 module.exports = {
+  getCompanyBranding,
   getCompanySettings,
   getFiscalOverview,
   updateCompanySettings,

@@ -9,9 +9,7 @@ const {
 const renderer = require("./renderer");
 const invoiceQuery = require("./invoiceQuery");
 const assetStore = require("./assetStore");
-const {
-  ensureEmailSchema,
-} = require("../../modules/email/ensureEmailSchema");
+const { getBranding } = require("../branding/brandingService");
 
 // Get the database connection for the current tenant.
 function getTenantDb(db) {
@@ -53,12 +51,13 @@ async function loadTemplate(
   return rows[0];
 }
 
-// Render the email using the selected template and invoice.
-function renderFor(template, invoice) {
+// Render the email using the selected template and invoice. branding (from
+// getBranding) fills the company name and logo the invoice's entity lacks.
+function renderFor(template, invoice, branding = null) {
   return renderer.renderTemplate(template, {
     ...renderer.buildContext(
       invoice,
-      assetStore.brandTokens()
+      { ...assetStore.brandTokens(), branding }
     ),
     footer_note: template.footer_note || "",
   });
@@ -87,7 +86,6 @@ async function queue(
   const tenantDb = getTenantDb(db);
 
   // Ensure email tables and tenant defaults exist.
-  await ensureEmailSchema(tenantDb, tenantId);
 
   // Use the supplied invoice or fetch it using the tenant connection.
   const target =
@@ -126,7 +124,8 @@ async function queue(
   // Generate the email subject and HTML.
   const { subject, html } = renderFor(
     template,
-    target
+    target,
+    await getBranding(tenantDb, target.region_id)
   );
 
   // Insert the email into this tenant's outbox.

@@ -5,7 +5,7 @@
 //   Dry run (default):  cd backend && node utils/backfillInvoiceValuation.js
 //   Apply:              cd backend && node utils/backfillInvoiceValuation.js --apply
 //
-// Cross-currency invoices (e.g. TetriQ-UK bills USD, books GBP) created before
+// Cross-currency invoices (e.g. a UK entity bills USD, books GBP) created before
 // createInvoice valued them keep exchange_rate at its DEFAULT 1 and a null
 // amount_base, so every GBP figure downstream renders the unconverted USD
 // number. This restates only the invoice row.

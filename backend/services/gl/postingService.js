@@ -45,15 +45,13 @@ const dateKey = (v) => {
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 // ---- lookups ---------------------------------------------------------------
-const _accountCache = new Map();
+// Not cached: each tenant has its own chart of accounts (see ledgerEngine).
 async function accountIdByCode(code, db = pool) {
-  if (_accountCache.has(code)) return _accountCache.get(code);
   const { rows } = await db.query(
     "SELECT id FROM chart_of_accounts WHERE account_code = $1 AND is_active = true",
     [code],
   );
   if (!rows.length) throw new Error(`Account code not found: ${code}`);
-  _accountCache.set(code, rows[0].id);
   return rows[0].id;
 }
 

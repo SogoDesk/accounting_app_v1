@@ -7,7 +7,8 @@
  *   - Same-origin static assets (hashed JS/CSS/images/fonts): stale-while-
  *     revalidate — instant from cache, refreshed in the background.
  */
-const VERSION = 'sdb-v1'
+// Bump when shell files change (v2: product icons replaced the old logo).
+const VERSION = 'sdb-v2'
 const SHELL_CACHE = `${VERSION}-shell`
 const ASSET_CACHE = `${VERSION}-assets`
 const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']

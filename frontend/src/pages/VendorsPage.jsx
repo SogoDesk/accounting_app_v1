@@ -135,7 +135,7 @@ export default function VendorsPage() {
 
   // Currencies offered for a vendor, scoped to the selected region: the entity's
   // book (functional) currency, its suggested default, the region's country
-  // currency, plus USD (group/reporting). For TetriQ-UK this yields GBP + USD.
+  // currency, plus USD (group/reporting). For a UK entity this yields GBP + USD.
   const currencyOptions = useMemo(() => {
     const region = regionById[String(form.region_id)]
     const list = []
@@ -254,7 +254,7 @@ export default function VendorsPage() {
       if (key === 'region_id') {
         const region = regionById[String(value)]
         // Vendors/AP default to the entity's book (functional) currency — that's
-        // what consultants are paid in (e.g. GBP for TetriQ-UK). Fall back to the
+        // what consultants are paid in (e.g. GBP for a UK entity). Fall back to the
         // region's default_currency when no functional currency is set.
         const preferred = region?.functional_currency || region?.default_currency
         if (preferred) next.currency = preferred

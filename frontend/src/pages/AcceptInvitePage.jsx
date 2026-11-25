@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { setStoredTenant } from '../utils/tenant'
-import logo from '../assets/tetriq-no-bg.png'
 import './login.css'
 
 // Public page a newly invited client administrator lands on from their email.
@@ -54,7 +53,10 @@ export default function AcceptInvitePage() {
       <div className="login-shell">
         <div className="login-card">
           <div className="login-logo">
-            <img className="logo-image" src={logo} alt="TetriQ Solutions" />
+            <div className="product-mark" aria-label="SogoDesk Books">
+              <span className="product-mark-badge" aria-hidden="true">SD</span>
+              <span className="product-mark-name">SogoDesk Books</span>
+            </div>
           </div>
 
           {loadError ? (

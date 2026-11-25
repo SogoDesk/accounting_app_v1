@@ -127,4 +127,35 @@ const DEFAULT_TEMPLATES = [
   },
 ];
 
-module.exports = { DEFAULT_TEMPLATES };
+const TEMPLATE_KEYS = ["INVOICE", "REMINDER"];
+
+// Seeds the default email templates and reminder settings for one tenant.
+// Called by tenant provisioning; existing rows are left untouched. The schema
+// itself lives in database/migrations/pgm, never in application code.
+const seedEmailDefaults = async (db, tenantId) => {
+  for (const template of DEFAULT_TEMPLATES) {
+    await db.query(
+      `INSERT INTO email_templates
+        (tenant_id, template_key, name, description, subject, body)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (tenant_id, template_key) DO NOTHING`,
+      [
+        tenantId,
+        template.template_key,
+        template.name,
+        template.description,
+        template.subject,
+        template.body,
+      ],
+    );
+  }
+
+  await db.query(
+    `INSERT INTO invoice_reminder_settings (tenant_id)
+     VALUES ($1)
+     ON CONFLICT (tenant_id) DO NOTHING`,
+    [tenantId],
+  );
+};
+
+module.exports = { DEFAULT_TEMPLATES, TEMPLATE_KEYS, seedEmailDefaults };

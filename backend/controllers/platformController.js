@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 const { provisionTenant, TENANT_CODE_RE } = require("../services/tenants/provisionTenant");
 const { createInvite, sendInviteEmail } = require("../services/tenants/inviteService");
-const { ensurePlatformSchema } = require("../services/platform/ensurePlatformSchema");
 
 const parseId = (value) => {
   const id = Number(value);
@@ -29,7 +28,6 @@ const withTenantTx = async (tenantId, fn) => {
 // POST /api/platform/tenants — onboard a client and invite its admin
 const createTenant = async (req, res) => {
   try {
-    await ensurePlatformSchema();
 
     const {
       tenant_name,
@@ -84,7 +82,6 @@ const createTenant = async (req, res) => {
 // GET /api/platform/tenants
 const getTenants = async (req, res) => {
   try {
-    await ensurePlatformSchema();
     // Invite counts consider only each admin's most recent invitation.
     const result = await pool.query(
       `SELECT t.id, t.tenant_name, t.tenant_code, t.status, t.created_at,
@@ -143,7 +140,6 @@ const getTenant = async (req, res) => {
   }
 
   try {
-    await ensurePlatformSchema();
 
     const tenantResult = await pool.query(
       "SELECT id, tenant_name, tenant_code, status, created_at FROM tenants WHERE id = $1",
@@ -234,7 +230,6 @@ const resendInvite = async (req, res) => {
   }
 
   try {
-    await ensurePlatformSchema();
 
     const tenantResult = await pool.query(
       "SELECT id, tenant_name, tenant_code, status FROM tenants WHERE id = $1",
